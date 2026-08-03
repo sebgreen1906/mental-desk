@@ -133,12 +133,27 @@
   .problem-card.wrong-flash{border-color:var(--red);}
   .problem-text{font-family:var(--font-display);font-size:52px;font-weight:600;letter-spacing:-0.01em;}
   @media (max-width:520px){.problem-text{font-size:36px;}}
+  .answer-row{margin-top:28px;display:flex;justify-content:center;align-items:stretch;gap:10px;flex-wrap:wrap;}
   .answer-input{
-    margin-top:28px;width:220px;max-width:80%;text-align:center;
+    width:180px;max-width:60%;text-align:center;
     background:var(--bg);border:1px solid var(--border);border-radius:8px;
     color:var(--text);font-family:var(--font-mono);font-size:24px;padding:12px;
+    min-height:52px;
   }
   .answer-input.wrong{border-color:var(--red);}
+  .submit-btn{
+    min-height:52px;padding:0 26px;border:none;border-radius:8px;
+    background:var(--amber);color:#0B0E11;font-family:var(--font-display);font-weight:700;
+    font-size:15px;letter-spacing:.03em;text-transform:uppercase;cursor:pointer;
+    transition:transform .1s, box-shadow .15s;
+  }
+  .submit-btn:hover{box-shadow:0 0 0 3px var(--amber-dim);}
+  .submit-btn:active{transform:scale(.97);}
+  @media (max-width:480px){
+    .answer-row{flex-direction:column;align-items:center;}
+    .answer-input{width:100%;max-width:260px;}
+    .submit-btn{width:100%;max-width:260px;}
+  }
   .hint-row{margin-top:14px;font-size:12px;color:var(--text-faint);}
 
   /* ---------- SUMMARY ---------- */
@@ -274,8 +289,11 @@
       </div>
       <div class="problem-card" id="problemCard">
         <div class="problem-text" id="problemText">–</div>
-        <input class="answer-input" id="answerInput" inputmode="numeric" autocomplete="off" placeholder="?" />
-        <div class="hint-row">Press Enter to submit</div>
+        <div class="answer-row">
+          <input class="answer-input" id="answerInput" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="?" />
+          <button class="submit-btn" id="submitBtn" aria-label="Submit answer">Submit</button>
+        </div>
+        <div class="hint-row">Tap submit or press Enter</div>
       </div>
       <button class="btn-secondary" id="exitSessionBtn" style="margin-top:16px;width:100%;">End session</button>
     </div>
@@ -542,6 +560,10 @@ function submitAnswer(){
 
 document.getElementById('answerInput').addEventListener('keydown', e=>{
   if(e.key==='Enter') submitAnswer();
+});
+document.getElementById('submitBtn').addEventListener('click', submitAnswer);
+document.getElementById('submitBtn').addEventListener('pointerdown', e=>{
+  e.preventDefault(); // keep the on-screen keyboard open instead of blurring the input
 });
 
 function endSession(){
