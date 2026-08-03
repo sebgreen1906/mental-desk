@@ -1384,14 +1384,26 @@ async function enterMatch(matchId){
   startMatchLoop();
 }
 
+const BOT_LEAGUE_SKILL = { iron:0.28, bronze:0.42, silver:0.58, gold:0.74, diamond:0.90, hyper:1.05 };
+const BOT_FIRST_NAMES = ['Alex','Jordan','Sam','Taylor','Casey','Riley','Morgan','Jamie','Avery','Quinn',
+  'Drew','Skyler','Reese','Harper','Rowan','Emerson','Finley','Blake','Dakota','Peyton',
+  'Kai','Milo','Nova','Zane','Ivy','Leo','Ruby','Max','Ari','Sage'];
+
+function generateBotUsername(){
+  const name = BOT_FIRST_NAMES[randInt(0, BOT_FIRST_NAMES.length-1)];
+  const num = randInt(10, 999);
+  return Math.random() < 0.5 ? `${name}${num}` : `${name}_${num}`;
+}
+
 function startBotMatch(){
   stopMatchmakingListeners();
   if(currentUser) deleteDoc(doc(db,'matchQueue', currentUser.uid)).catch(()=>{});
 
-  let botSkill = 0.75;
-  if((profile.onlineLossStreak||0) >= 2) botSkill -= Math.min(0.25, profile.onlineLossStreak * 0.05);
-  if((profile.onlineWinStreak||0) >= 3) botSkill += Math.min(0.25, profile.onlineWinStreak * 0.05);
-  botSkill = Math.max(0.35, Math.min(1.1, botSkill));
+  const league = leagueForTrophies(profile.trophies || 0);
+  let botSkill = BOT_LEAGUE_SKILL[league.id] ?? 0.6;
+  if((profile.onlineLossStreak||0) >= 2) botSkill -= Math.min(0.15, profile.onlineLossStreak * 0.03);
+  if((profile.onlineWinStreak||0) >= 3) botSkill += Math.min(0.15, profile.onlineWinStreak * 0.02);
+  botSkill = Math.max(0.15, Math.min(1.3, botSkill));
 
   onlineState = {
     matchId:null, oppUid:'bot', isBot:true, botSkill, botStreak:0,
@@ -1400,7 +1412,7 @@ function startBotMatch(){
     oppTrophiesAtStart: null,
     myScore:0, myWrong:0, myStreak:0, myBestStreak:0, myMatchScore:0,
     oppMatchScore:0, current:null, questionStart:0, timer:null,
-    oppName: 'Bot Opponent',
+    oppName: generateBotUsername(),
     bias: difficultyBias()
   };
   onlineState.oppTrophiesAtStart = onlineState.botTrophies;
@@ -1522,6 +1534,7 @@ function endMatch(){
   const delta = trophyDelta(profile.trophies||0, oppTrophies, iWon);
   const beforeLeague = leagueForTrophies(profile.trophies||0);
   const wasOnLossStreak = (profile.onlineLossStreak||0) >= 3;
+  const trophiesBefore = profile.trophies||0;
 
   if(iWon){
     profile.trophies = Math.min(TROPHY_CAP, (profile.trophies||0) + delta);
@@ -1534,6 +1547,7 @@ function endMatch(){
     profile.onlineLossStreak = (profile.onlineLossStreak||0) + 1;
     profile.onlineWinStreak = 0;
   }
+  const actualDelta = Math.abs(profile.trophies - trophiesBefore);
   profile.peakTrophies = Math.max(profile.peakTrophies||0, profile.trophies);
   const afterLeague = leagueForTrophies(profile.trophies);
 
@@ -1557,7 +1571,7 @@ function endMatch(){
   document.getElementById('resultScoreLine').textContent =
     `${Math.round(myMatchScore)} – ${Math.round(oppMatchScore)} (${myRaw} correct)`;
   const deltaEl = document.getElementById('resultTrophyDelta');
-  deltaEl.textContent = iWon ? `+${delta} trophies` : `-${delta} trophies`;
+  deltaEl.textContent = iWon ? `+${actualDelta} trophies` : `-${actualDelta} trophies`;
   deltaEl.className = 'trophy-delta ' + (iWon ? 'up' : 'down');
   const transEl = document.getElementById('resultLeagueTransition');
   if(beforeLeague.id !== afterLeague.id){
