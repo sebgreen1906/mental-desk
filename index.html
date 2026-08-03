@@ -262,6 +262,46 @@
   .queue-status p{color:var(--text-dim);font-size:13px;}
   .lobby-code{font-family:var(--font-display);font-size:36px;font-weight:700;letter-spacing:.15em;color:var(--amber);margin:14px 0;}
 
+  #lobbyLeagueBadge, #profileLeagueBadge{display:inline-block;cursor:pointer;}
+
+  /* ---------- LEAGUE LEVELS MODAL ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(5,7,10,.75);z-index:1000;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-overlay.hidden{display:none;}
+  .modal-box{
+    background:var(--panel);border:1px solid var(--border);border-radius:14px;
+    max-width:720px;width:100%;max-height:85vh;overflow-y:auto;padding:28px;position:relative;
+  }
+  .modal-close{
+    position:absolute;top:16px;right:16px;background:transparent;border:1px solid var(--border);
+    color:var(--text-dim);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:15px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .modal-close:hover{border-color:var(--red);color:var(--red);}
+  .modal-title{font-family:var(--font-display);font-weight:700;font-size:22px;margin-bottom:6px;padding-right:36px;}
+  .modal-sub{font-size:13px;color:var(--text-dim);margin-bottom:24px;line-height:1.5;}
+
+  .league-ladder{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  @media (max-width:560px){.league-ladder{grid-template-columns:repeat(2,1fr);}}
+  .league-tier{
+    background:var(--panel-alt);border:1px solid var(--border);border-radius:12px;padding:18px 14px;
+    text-align:center;transition:border-color .15s,transform .15s;
+  }
+  .league-tier.current{border-color:var(--amber);box-shadow:0 0 0 2px var(--amber-dim);transform:translateY(-2px);}
+  .league-tier.hyper{background:linear-gradient(160deg,#241a08,#1b1224);box-shadow:0 0 20px rgba(255,92,214,.2);}
+  .league-tier .tier-icon{font-size:36px;margin-bottom:8px;}
+  .league-tier .tier-name{font-family:var(--font-display);font-weight:700;font-size:14px;}
+  .league-tier.hyper .tier-name{
+    background:linear-gradient(135deg,#FF5CD6,#F5A623,#5DD9F5);-webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .league-tier .tier-range{font-size:11px;color:var(--text-faint);margin-top:4px;}
+  .league-tier .tier-you{
+    margin-top:8px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);
+    font-family:var(--font-display);font-weight:700;
+  }
+
   .match-hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:10px;}
   .match-side{flex:1;text-align:center;}
   .match-side .pname{font-size:12px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -631,6 +671,15 @@
   <footer class="foot">MENTAL DESK — practice tool. No data leaves this session.</footer>
 </div>
 
+<div class="modal-overlay hidden" id="leagueModal">
+  <div class="modal-box">
+    <button class="modal-close" id="leagueModalClose" aria-label="Close">✕</button>
+    <div class="modal-title">League levels</div>
+    <div class="modal-sub">Win ranked matches to climb the ladder. Reach 2,500 trophies and you'll earn the permanent Hyperleague Elite badge — kept on your profile even if you're later demoted.</div>
+    <div class="league-ladder" id="leagueLadder"></div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
@@ -992,6 +1041,42 @@ function leagueBadgeHtml(league){
     : `background:${league.color};color:#0B0E11;`;
   return `<span class="league-badge" style="${style}">${league.icon} ${league.name}</span>`;
 }
+
+/* ================= LEAGUE LEVELS MODAL ================= */
+function openLeagueModal(){
+  renderLeagueLadder();
+  document.getElementById('leagueModal').classList.remove('hidden');
+}
+function closeLeagueModal(){
+  document.getElementById('leagueModal').classList.add('hidden');
+}
+function renderLeagueLadder(){
+  const ladder = document.getElementById('leagueLadder');
+  ladder.innerHTML = '';
+  const myTrophies = profile ? (profile.trophies || 0) : 0;
+  const myLeague = leagueForTrophies(myTrophies);
+  LEAGUES.forEach(l=>{
+    const tier = document.createElement('div');
+    tier.className = 'league-tier' + (l.id === myLeague.id ? ' current' : '') + (l.id === 'hyper' ? ' hyper' : '');
+    const rangeText = l.id === 'hyper' ? `${l.min}+ (cap ${TROPHY_CAP})` : `${l.min} – ${l.max}`;
+    tier.innerHTML = `
+      <div class="tier-icon">${l.icon}</div>
+      <div class="tier-name">${l.name}</div>
+      <div class="tier-range">${rangeText}</div>
+      ${l.id === myLeague.id ? '<div class="tier-you">You are here</div>' : ''}
+    `;
+    ladder.appendChild(tier);
+  });
+}
+document.getElementById('lobbyLeagueBadge').addEventListener('click', openLeagueModal);
+document.getElementById('profileLeagueBadge').addEventListener('click', openLeagueModal);
+document.getElementById('leagueModalClose').addEventListener('click', closeLeagueModal);
+document.getElementById('leagueModal').addEventListener('click', e=>{
+  if(e.target.id === 'leagueModal') closeLeagueModal();
+});
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape') closeLeagueModal();
+});
 
 let currentUser = null;
 let profile = null;
