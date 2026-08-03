@@ -640,6 +640,11 @@ function setTick(label, value){
 /* ================= TABS ================= */
 document.querySelectorAll('nav.tabs button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
+    if(typeof onlineState !== 'undefined' && onlineState && btn.dataset.view !== 'online'){
+      const proceed = confirm('Leaving this match now forfeits it and costs you 30 trophies. Continue?');
+      if(!proceed) return;
+      forfeitMatch();
+    }
     document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -1368,7 +1373,6 @@ async function enterMatch(matchId){
   };
 
   document.getElementById('matchOppName').textContent = onlineState.oppName;
-  document.getElementById('matchOppScore').textContent = '0';
 
   await setDoc(doc(db,'matches', matchId, 'players', currentUser.uid), {
     score:0, wrong:0, streak:0, bestStreak:0, matchScore:0, lastUpdate: Date.now()
@@ -1384,7 +1388,11 @@ async function enterMatch(matchId){
   startMatchLoop();
 }
 
-const BOT_LEAGUE_SKILL = { iron:0.28, bronze:0.42, silver:0.58, gold:0.74, diamond:0.90, hyper:1.05 };
+// Target range of CORRECT answers per 60s match, by league (bot's final correct count
+// lands close to a random point in this range, not just a loose average).
+const BOT_LEAGUE_TARGET_RANGE = {
+  iron:[2,5], bronze:[3,6], silver:[4,8], gold:[8,20], diamond:[12,30], hyper:[20,55]
+};
 const BOT_FIRST_NAMES = ['Alex','Jordan','Sam','Taylor','Casey','Riley','Morgan','Jamie','Avery','Quinn',
   'Drew','Skyler','Reese','Harper','Rowan','Emerson','Finley','Blake','Dakota','Peyton',
   'Kai','Milo','Nova','Zane','Ivy','Leo','Ruby','Max','Ari','Sage'];
@@ -1400,13 +1408,14 @@ function startBotMatch(){
   if(currentUser) deleteDoc(doc(db,'matchQueue', currentUser.uid)).catch(()=>{});
 
   const league = leagueForTrophies(profile.trophies || 0);
-  let botSkill = BOT_LEAGUE_SKILL[league.id] ?? 0.6;
-  if((profile.onlineLossStreak||0) >= 2) botSkill -= Math.min(0.15, profile.onlineLossStreak * 0.03);
-  if((profile.onlineWinStreak||0) >= 3) botSkill += Math.min(0.15, profile.onlineWinStreak * 0.02);
-  botSkill = Math.max(0.15, Math.min(1.3, botSkill));
+  const range = BOT_LEAGUE_TARGET_RANGE[league.id] || [4,8];
+  let target = randInt(range[0], range[1]);
+  if((profile.onlineLossStreak||0) >= 2) target = Math.max(0, target - Math.round(profile.onlineLossStreak * 0.5));
+  if((profile.onlineWinStreak||0) >= 3) target = target + Math.round(profile.onlineWinStreak * 0.5);
 
   onlineState = {
-    matchId:null, oppUid:'bot', isBot:true, botSkill, botStreak:0,
+    matchId:null, oppUid:'bot', isBot:true, botStreak:0,
+    botTargetCorrect: target, botCorrectCount: 0, botTicks: 0,
     botTrophies: Math.max(0, (profile.trophies||0) + randInt(-80,80)),
     startedAt: Date.now(),
     oppTrophiesAtStart: null,
@@ -1418,7 +1427,6 @@ function startBotMatch(){
   onlineState.oppTrophiesAtStart = onlineState.botTrophies;
 
   document.getElementById('matchOppName').textContent = onlineState.oppName;
-  document.getElementById('matchOppScore').textContent = '0';
 
   startMatchLoop();
   runBotSimulation();
@@ -1428,11 +1436,16 @@ function runBotSimulation(){
   if(!onlineState || !onlineState.isBot) return;
   const elapsed = (Date.now() - onlineState.startedAt) / 1000;
   if(elapsed >= MATCH_DURATION) return;
-  const delay = Math.max(500, 1400 - onlineState.botSkill * 500 + randInt(-200,200));
   onlineState.botTimeout = setTimeout(()=>{
     if(!onlineState || !onlineState.isBot) return;
-    const correct = Math.random() < onlineState.botSkill;
+    onlineState.botTicks++;
+    // Each ~1s tick, aim the remaining hit-rate so the match lands on botTargetCorrect by time-up.
+    const remainingTicks = Math.max(1, MATCH_DURATION - onlineState.botTicks);
+    const remainingTarget = Math.max(0, onlineState.botTargetCorrect - onlineState.botCorrectCount);
+    const pCorrect = Math.min(0.95, remainingTarget / remainingTicks);
+    const correct = Math.random() < pCorrect;
     if(correct){
+      onlineState.botCorrectCount++;
       onlineState.botStreak++;
       const mult = onlineState.botStreak >= 10 ? 2 : onlineState.botStreak >= 5 ? 1.5 : 1;
       onlineState.oppMatchScore = Math.round((onlineState.oppMatchScore + mult) * 10) / 10;
@@ -1441,7 +1454,7 @@ function runBotSimulation(){
     }
     document.getElementById('matchOppScore').textContent = Math.round(onlineState.oppMatchScore);
     runBotSimulation();
-  }, delay);
+  }, 1000 + randInt(-150,150));
 }
 
 function tierForElapsed(sec, bias){
@@ -1451,6 +1464,9 @@ function tierForElapsed(sec, bias){
 
 function startMatchLoop(){
   showOnlinePanel('match');
+  document.getElementById('matchMyScore').textContent = '0';
+  document.getElementById('matchOppScore').textContent = '0';
+  document.getElementById('matchClock').textContent = MATCH_DURATION;
   nextMatchProblem();
   document.getElementById('matchAnswerInput').focus();
 
@@ -1509,6 +1525,32 @@ document.getElementById('matchAnswerInput').addEventListener('keydown', e=>{
 });
 document.getElementById('matchSubmitBtn').addEventListener('click', submitMatchAnswer);
 document.getElementById('matchSubmitBtn').addEventListener('pointerdown', e=> e.preventDefault());
+
+function forfeitMatch(){
+  if(!onlineState) return;
+  clearInterval(onlineState.timer);
+  if(onlineState.botTimeout) clearTimeout(onlineState.botTimeout);
+  if(onlineState.oppUnsub) onlineState.oppUnsub();
+
+  const isBot = onlineState.isBot;
+  const matchId = onlineState.matchId;
+
+  const trophiesBefore = profile.trophies || 0;
+  profile.trophies = Math.max(0, trophiesBefore - 30);
+  profile.onlineLosses = (profile.onlineLosses||0) + 1;
+  profile.onlineLossStreak = (profile.onlineLossStreak||0) + 1;
+  profile.onlineWinStreak = 0;
+
+  applyProfileToTicker();
+  saveProfile();
+
+  if(!isBot && matchId){
+    updateDoc(doc(db,'matches', matchId), { status:'forfeited' }).catch(()=>{});
+  }
+
+  onlineState = null;
+  showOnlinePanel('lobby');
+}
 
 function endMatch(){
   if(!onlineState) return;
