@@ -149,10 +149,18 @@
   }
   .submit-btn:hover{box-shadow:0 0 0 3px var(--amber-dim);}
   .submit-btn:active{transform:scale(.97);}
+  .skip-btn{
+    min-height:52px;padding:0 22px;border-radius:8px;border:1px solid var(--border);
+    background:var(--panel-alt);color:var(--text-dim);font-family:var(--font-display);font-weight:600;
+    font-size:14px;letter-spacing:.03em;text-transform:uppercase;cursor:pointer;
+    transition:border-color .15s,color .15s;
+  }
+  .skip-btn:hover{border-color:var(--amber);color:var(--amber);}
   @media (max-width:480px){
     .answer-row{flex-direction:column;align-items:center;}
     .answer-input{width:100%;max-width:260px;}
     .submit-btn{width:100%;max-width:260px;}
+    .skip-btn{width:100%;max-width:260px;}
   }
   .hint-row{margin-top:14px;font-size:12px;color:var(--text-faint);}
 
@@ -376,6 +384,7 @@
         <div class="answer-row">
           <input class="answer-input" id="answerInput" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="?" />
           <button class="submit-btn" id="submitBtn" aria-label="Submit answer">Submit</button>
+          <button class="skip-btn" id="skipBtn" aria-label="Skip question">Skip</button>
         </div>
         <div class="hint-row">Tap submit or press Enter</div>
       </div>
@@ -479,6 +488,7 @@
         <div class="answer-row">
           <input class="answer-input" id="matchAnswerInput" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="?" />
           <button class="submit-btn" id="matchSubmitBtn">Submit</button>
+          <button class="skip-btn" id="matchSkipBtn" aria-label="Skip question">Skip</button>
         </div>
       </div>
     </div>
@@ -841,10 +851,16 @@ function submitAnswer(){
   updateHud();
 
   if(lengthMode.type==='count' && session.seen>=session.countTarget){
-    setTimeout(endSession, 220);
+    session.advanceTimer = setTimeout(endSession, 220);
     return;
   }
-  setTimeout(nextProblem, 220);
+  session.advanceTimer = setTimeout(nextProblem, 220);
+}
+
+function skipProblem(){
+  if(!session) return;
+  if(session.advanceTimer) clearTimeout(session.advanceTimer);
+  nextProblem();
 }
 
 document.getElementById('answerInput').addEventListener('keydown', e=>{
@@ -854,6 +870,8 @@ document.getElementById('submitBtn').addEventListener('click', submitAnswer);
 document.getElementById('submitBtn').addEventListener('pointerdown', e=>{
   e.preventDefault(); // keep the on-screen keyboard open instead of blurring the input
 });
+document.getElementById('skipBtn').addEventListener('click', skipProblem);
+document.getElementById('skipBtn').addEventListener('pointerdown', e=> e.preventDefault());
 
 function endSession(){
   if(session.timer) clearInterval(session.timer);
@@ -1633,7 +1651,14 @@ function submitMatchAnswer(){
   }
 
   const elapsed = (Date.now() - onlineState.startedAt)/1000;
-  if(elapsed < MATCH_DURATION) setTimeout(nextMatchProblem, 180);
+  if(elapsed < MATCH_DURATION) onlineState.advanceTimer = setTimeout(nextMatchProblem, 180);
+}
+
+function skipMatchProblem(){
+  if(!onlineState || onlineState.current == null) return;
+  if(onlineState.advanceTimer) clearTimeout(onlineState.advanceTimer);
+  const elapsed = (Date.now() - onlineState.startedAt)/1000;
+  if(elapsed < MATCH_DURATION) nextMatchProblem();
 }
 
 document.getElementById('matchAnswerInput').addEventListener('keydown', e=>{
@@ -1641,6 +1666,8 @@ document.getElementById('matchAnswerInput').addEventListener('keydown', e=>{
 });
 document.getElementById('matchSubmitBtn').addEventListener('click', submitMatchAnswer);
 document.getElementById('matchSubmitBtn').addEventListener('pointerdown', e=> e.preventDefault());
+document.getElementById('matchSkipBtn').addEventListener('click', skipMatchProblem);
+document.getElementById('matchSkipBtn').addEventListener('pointerdown', e=> e.preventDefault());
 
 function forfeitMatch(){
   if(!onlineState) return;
