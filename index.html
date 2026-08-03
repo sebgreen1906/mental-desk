@@ -221,6 +221,67 @@
   .model-approach .final b{color:var(--green);}
   .disclaimer{font-size:11px;color:var(--text-faint);margin-top:10px;line-height:1.5;}
 
+  /* ---------- HEADER ACTIONS / AUTH ---------- */
+  .header-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .auth-widget{display:flex;align-items:center;gap:10px;}
+  .signin-btn{
+    display:flex;align-items:center;gap:8px;background:var(--panel-alt);border:1px solid var(--border);
+    color:var(--text);font-family:var(--font-display);font-weight:600;font-size:13px;
+    padding:9px 16px;border-radius:8px;cursor:pointer;transition:border-color .15s;
+  }
+  .signin-btn:hover{border-color:var(--amber);color:var(--amber);}
+  .signin-btn .g-badge{
+    width:18px;height:18px;border-radius:50%;background:#fff;color:#4285F4;font-family:var(--font-display);
+    font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;
+  }
+  .user-chip{display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--panel-alt);
+    border:1px solid var(--border);border-radius:20px;padding:5px 14px 5px 5px;transition:border-color .15s;}
+  .user-chip:hover{border-color:var(--amber);}
+  .user-chip .avatar{width:28px;height:28px;border-radius:50%;background:var(--amber-dim);
+    display:flex;align-items:center;justify-content:center;font-size:15px;overflow:hidden;}
+  .user-chip .uname{font-size:12px;color:var(--text);font-family:var(--font-display);font-weight:600;}
+  .signout-btn{background:transparent;border:1px solid var(--border);color:var(--text-faint);
+    border-radius:8px;padding:9px 12px;cursor:pointer;font-size:12px;font-family:var(--font-mono);}
+  .signout-btn:hover{color:var(--red);border-color:var(--red);}
+
+  /* ---------- PROFILE ---------- */
+  .profile-hero{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:24px;}
+  .profile-avatar-wrap{position:relative;cursor:pointer;}
+  .profile-avatar{width:76px;height:76px;border-radius:50%;background:var(--panel-raised);
+    border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden;}
+  .profile-avatar-wrap:hover .profile-avatar{border-color:var(--amber);}
+  .profile-avatar-edit{position:absolute;bottom:-2px;right:-2px;background:var(--amber);color:#0B0E11;
+    width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+  .profile-name{font-family:var(--font-display);font-weight:700;font-size:20px;}
+  .profile-email{font-size:12px;color:var(--text-faint);margin-top:2px;}
+  .iq-badge{font-family:var(--font-display);font-size:12px;color:var(--text-dim);margin-top:8px;}
+  .iq-badge b{color:var(--amber);font-size:22px;}
+
+  .avatar-picker{display:none;flex-wrap:wrap;gap:10px;margin-top:16px;}
+  .avatar-picker.show{display:flex;}
+  .avatar-option{width:44px;height:44px;border-radius:50%;border:2px solid var(--border);background:var(--panel-alt);
+    display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:border-color .15s;}
+  .avatar-option:hover,.avatar-option.selected{border-color:var(--amber);}
+
+  .banner-row{display:flex;flex-wrap:wrap;gap:10px;}
+  .banner-chip{display:flex;align-items:center;gap:6px;background:var(--panel-alt);border:1px solid var(--border);
+    border-radius:20px;padding:7px 14px;font-size:12px;color:var(--text-dim);}
+  .banner-chip .ic{font-size:14px;}
+  .no-banners{font-size:13px;color:var(--text-faint);}
+
+  .signedout-panel{text-align:center;padding:40px 20px;}
+  .signedout-panel p{color:var(--text-dim);font-size:14px;margin-bottom:20px;}
+
+  .about-you summary{cursor:pointer;font-family:var(--font-display);font-size:13px;color:var(--text-dim);
+    letter-spacing:.03em;text-transform:uppercase;padding:6px 0;}
+  .about-you-fields{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;}
+  @media (max-width:520px){.about-you-fields{grid-template-columns:1fr;}}
+  .about-you-fields input, .about-you-fields select{
+    width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+    color:var(--text);font-family:var(--font-mono);font-size:13px;padding:10px 12px;
+  }
+  .save-hint{font-size:11px;color:var(--text-faint);margin-top:8px;}
+
   footer.foot{text-align:center;margin-top:40px;font-size:11px;color:var(--text-faint);letter-spacing:.04em;}
 </style>
 </head>
@@ -236,10 +297,21 @@
       <div class="brand">MENTAL <span>DESK</span></div>
       <div class="brand-sub">Arithmetic reflexes &amp; estimation reasoning, interview-ready</div>
     </div>
-    <nav class="tabs">
-      <button class="active" data-view="drill">Speed Drills</button>
-      <button data-view="cases">Case Studies</button>
-    </nav>
+    <div class="header-actions">
+      <nav class="tabs">
+        <button class="active" data-view="drill">Speed Drills</button>
+        <button data-view="cases">Case Studies</button>
+        <button data-view="profile">Profile</button>
+      </nav>
+      <div class="auth-widget" id="authWidget">
+        <button class="signin-btn" id="signinBtn"><span class="g-badge">G</span>Sign in with Google</button>
+        <div class="user-chip" id="userChip" style="display:none;">
+          <span class="avatar" id="userChipAvatar"></span>
+          <span class="uname" id="userChipName"></span>
+        </div>
+        <button class="signout-btn" id="signoutBtn" style="display:none;">Sign out</button>
+      </div>
+    </div>
   </header>
 
   <!-- ============ DRILL VIEW ============ -->
@@ -359,10 +431,96 @@
     </div>
   </section>
 
+  <!-- ============ PROFILE VIEW ============ -->
+  <section class="view" id="view-profile">
+
+    <div class="panel" id="profileSignedOut" style="display:none;">
+      <div class="signedout-panel">
+        <h2 class="section-title" style="justify-content:center;">Your profile</h2>
+        <p>Sign in with Google to save your IQ score, best sessions, and achievement banners across devices.</p>
+        <button class="start-btn" id="profileSigninBtn" style="max-width:280px;margin:0 auto;">Sign in with Google</button>
+      </div>
+    </div>
+
+    <div id="profileSignedIn" style="display:none;">
+      <div class="panel">
+        <div class="profile-hero">
+          <div class="profile-avatar-wrap" id="avatarPickerToggle">
+            <div class="profile-avatar" id="profileAvatar"></div>
+            <div class="profile-avatar-edit">✎</div>
+          </div>
+          <div>
+            <div class="profile-name" id="profileName"></div>
+            <div class="profile-email" id="profileEmail"></div>
+            <div class="iq-badge">IQ SCORE <b id="profileIq">100</b></div>
+          </div>
+        </div>
+        <div class="avatar-picker" id="avatarPicker"></div>
+      </div>
+
+      <div class="panel">
+        <h2 class="section-title">Lifetime stats</h2>
+        <div class="summary-grid">
+          <div class="summary-stat"><div class="num" id="profTotalCorrect">0</div><div class="lab">Correct answers</div></div>
+          <div class="summary-stat"><div class="num" id="profTotalSessions">0</div><div class="lab">Sessions played</div></div>
+          <div class="summary-stat"><div class="num" id="profBestStreak">0</div><div class="lab">Best streak ever</div></div>
+          <div class="summary-stat"><div class="num" id="profBestAcc">0%</div><div class="lab">Best session accuracy</div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="section-title">Achievement banners</h2>
+        <div class="banner-row" id="bannerRow"></div>
+      </div>
+
+      <div class="panel">
+        <details class="about-you">
+          <summary>About you (optional)</summary>
+          <div class="about-you-fields">
+            <div>
+              <div class="field-label">Age</div>
+              <input type="number" id="ageInput" min="1" max="120" placeholder="e.g. 27" />
+            </div>
+            <div>
+              <div class="field-label">Gender</div>
+              <select id="genderInput">
+                <option value="">Prefer not to say</option>
+                <option value="female">Female</option>
+                <option value="male">Male</option>
+                <option value="nonbinary">Non-binary</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="save-hint">Optional — used only to personalize your experience. Saved automatically.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
   <footer class="foot">MENTAL DESK — practice tool. No data leaves this session.</footer>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc }
+  from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+/* ================= FIREBASE CONFIG ================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyDtYad9YdJ8hueIS3ecetmQrQjlJv6lVQI",
+  authDomain: "mental-desk.firebaseapp.com",
+  projectId: "mental-desk",
+  storageBucket: "mental-desk.firebasestorage.app",
+  messagingSenderId: "394120628833",
+  appId: "1:394120628833:web:adbbd2dbcba7d9d41c3820"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
+
 /* ================= TICKER ================= */
 const tickerData = [
   {l:'STREAK', v:'0'}, {l:'ACCURACY', v:'—'}, {l:'AVG TIME', v:'—'},
@@ -592,9 +750,14 @@ function endSession(){
   setTick('STREAK', session.bestStreak);
   setTick('ACCURACY', acc+'%');
   setTick('AVG TIME', avg.toFixed(1)+'s');
-  sessionsRun++; setTick('SESSIONS RUN', sessionsRun);
-  bestStreakEver = Math.max(bestStreakEver, session.bestStreak);
-  setTick('BEST STREAK', bestStreakEver);
+
+  if(currentUser && profile){
+    syncSessionToProfile({score: session.score, wrong: session.wrong, acc, avg, bestStreak: session.bestStreak});
+  } else {
+    sessionsRun++; setTick('SESSIONS RUN', sessionsRun);
+    bestStreakEver = Math.max(bestStreakEver, session.bestStreak);
+    setTick('BEST STREAK', bestStreakEver);
+  }
 }
 
 let sessionsRun = 0;
@@ -749,6 +912,235 @@ document.getElementById('revealBtn').addEventListener('click', ()=>{
   ul.appendChild(calcLi);
   document.getElementById('modelFinal').innerHTML = `Model estimate: <b>${currentCase.final}</b>`;
   document.getElementById('modelApproach').classList.add('show');
+});
+
+/* ================= ACCOUNTS / FIREBASE ================= */
+const AVATAR_PRESETS = ['🦉','🐺','🦊','🐢','🦅','🐯','🐬','🦁'];
+
+const ACHIEVEMENTS = [
+  { id:'first_session', icon:'🎯', label:'First session',  check:p => p.totalSessions >= 1 },
+  { id:'correct_100',    icon:'🥉', label:'100 correct',    check:p => p.totalCorrect >= 100 },
+  { id:'correct_1000',   icon:'🥈', label:'1,000 correct',  check:p => p.totalCorrect >= 1000 },
+  { id:'correct_5000',   icon:'🥇', label:'5,000 correct',  check:p => p.totalCorrect >= 5000 },
+  { id:'streak_20',      icon:'🔥', label:'20-streak',      check:p => p.bestStreakEver >= 20 },
+  { id:'streak_50',      icon:'⚡', label:'50-streak',       check:p => p.bestStreakEver >= 50 },
+];
+
+function defaultProfile(user){
+  return {
+    displayName: user.displayName || 'Anonymous',
+    email: user.email || '',
+    photoURL: user.photoURL || '',
+    avatarPreset: null,
+    iqScore: 100,
+    totalCorrect: 0,
+    totalWrong: 0,
+    totalSessions: 0,
+    bestSession: null,
+    bestStreakEver: 0,
+    banners: [],
+    age: null,
+    gender: null,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+}
+
+let currentUser = null;
+let profile = null;
+
+function profileRef(){
+  return doc(db, 'users', currentUser.uid);
+}
+
+async function loadProfile(){
+  const ref = profileRef();
+  const snap = await getDoc(ref);
+  if(snap.exists()){
+    profile = snap.data();
+  } else {
+    profile = defaultProfile(currentUser);
+    await setDoc(ref, profile);
+  }
+  applyProfileToTicker();
+  renderProfile();
+}
+
+function saveProfile(){
+  if(!currentUser || !profile) return;
+  profile.updatedAt = Date.now();
+  setDoc(profileRef(), profile, {merge:true}).catch(err=>console.error('Save failed', err));
+}
+
+function applyProfileToTicker(){
+  if(!profile) return;
+  sessionsRun = profile.totalSessions;
+  bestStreakEver = profile.bestStreakEver;
+  setTick('SESSIONS RUN', sessionsRun);
+  setTick('BEST STREAK', bestStreakEver);
+}
+
+function renderAvatarInto(el){
+  el.innerHTML = '';
+  if(profile && profile.avatarPreset){
+    el.textContent = profile.avatarPreset;
+  } else if(profile && profile.photoURL){
+    const img = document.createElement('img');
+    img.src = profile.photoURL;
+    img.alt = 'avatar';
+    img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover';
+    el.appendChild(img);
+  } else {
+    el.textContent = '👤';
+  }
+}
+
+function renderAuthHeader(){
+  const signinBtn = document.getElementById('signinBtn');
+  const userChip = document.getElementById('userChip');
+  const signoutBtn = document.getElementById('signoutBtn');
+  if(currentUser){
+    signinBtn.style.display = 'none';
+    userChip.style.display = 'flex';
+    signoutBtn.style.display = 'inline-block';
+    document.getElementById('userChipName').textContent = (profile && profile.displayName) || currentUser.displayName || 'You';
+    renderAvatarInto(document.getElementById('userChipAvatar'));
+  } else {
+    signinBtn.style.display = 'flex';
+    userChip.style.display = 'none';
+    signoutBtn.style.display = 'none';
+  }
+}
+
+function renderProfile(){
+  const signedOutPanel = document.getElementById('profileSignedOut');
+  const signedInPanel = document.getElementById('profileSignedIn');
+  if(!currentUser || !profile){
+    signedOutPanel.style.display = 'block';
+    signedInPanel.style.display = 'none';
+    renderAuthHeader();
+    return;
+  }
+  signedOutPanel.style.display = 'none';
+  signedInPanel.style.display = 'block';
+
+  document.getElementById('profileName').textContent = profile.displayName;
+  document.getElementById('profileEmail').textContent = profile.email;
+  document.getElementById('profileIq').textContent = profile.iqScore;
+  renderAvatarInto(document.getElementById('profileAvatar'));
+
+  document.getElementById('profTotalCorrect').textContent = profile.totalCorrect;
+  document.getElementById('profTotalSessions').textContent = profile.totalSessions;
+  document.getElementById('profBestStreak').textContent = profile.bestStreakEver;
+  document.getElementById('profBestAcc').textContent = (profile.bestSession ? profile.bestSession.accuracy : 0) + '%';
+
+  const bannerRow = document.getElementById('bannerRow');
+  bannerRow.innerHTML = '';
+  const earned = new Set(profile.banners || []);
+  if(earned.size === 0){
+    bannerRow.innerHTML = '<span class="no-banners">No banners yet — keep practicing to unlock some.</span>';
+  } else {
+    ACHIEVEMENTS.filter(a=>earned.has(a.id)).forEach(a=>{
+      const chip = document.createElement('div');
+      chip.className = 'banner-chip';
+      chip.innerHTML = `<span class="ic">${a.icon}</span>${a.label}`;
+      bannerRow.appendChild(chip);
+    });
+  }
+
+  document.getElementById('ageInput').value = profile.age || '';
+  document.getElementById('genderInput').value = profile.gender || '';
+
+  renderAuthHeader();
+}
+
+function renderAvatarPicker(){
+  const picker = document.getElementById('avatarPicker');
+  picker.innerHTML = '';
+  AVATAR_PRESETS.forEach(glyph=>{
+    const opt = document.createElement('div');
+    opt.className = 'avatar-option' + (profile && profile.avatarPreset===glyph ? ' selected' : '');
+    opt.textContent = glyph;
+    opt.addEventListener('click', ()=>{
+      profile.avatarPreset = glyph;
+      renderAvatarPicker();
+      renderProfile();
+      saveProfile();
+    });
+    picker.appendChild(opt);
+  });
+}
+
+function syncSessionToProfile(result){
+  profile.totalCorrect += result.score;
+  profile.totalWrong += result.wrong;
+  profile.totalSessions += 1;
+  profile.bestStreakEver = Math.max(profile.bestStreakEver, result.bestStreak);
+
+  const total = result.score + result.wrong;
+  if(total >= 5){
+    const delta = Math.round((result.acc - 75) / 5);
+    profile.iqScore = Math.max(50, Math.min(200, profile.iqScore + delta));
+  }
+
+  if(!profile.bestSession || result.score > profile.bestSession.score){
+    profile.bestSession = {
+      score: result.score, accuracy: result.acc,
+      avgTime: Number(result.avg.toFixed(1)), bestStreak: result.bestStreak, at: Date.now()
+    };
+  }
+
+  ACHIEVEMENTS.forEach(a=>{
+    if(a.check(profile) && !profile.banners.includes(a.id)){
+      profile.banners.push(a.id);
+    }
+  });
+
+  applyProfileToTicker();
+  renderProfile();
+  saveProfile();
+}
+
+document.getElementById('avatarPickerToggle').addEventListener('click', ()=>{
+  const picker = document.getElementById('avatarPicker');
+  if(!picker.classList.contains('show')) renderAvatarPicker();
+  picker.classList.toggle('show');
+});
+
+document.getElementById('userChip').addEventListener('click', ()=>{
+  document.querySelector('nav.tabs button[data-view="profile"]').click();
+});
+
+function doSignIn(){
+  signInWithPopup(auth, new GoogleAuthProvider()).catch(err=>{
+    console.error('Sign-in failed', err);
+    alert('Sign-in failed: ' + err.message);
+  });
+}
+document.getElementById('signinBtn').addEventListener('click', doSignIn);
+document.getElementById('profileSigninBtn').addEventListener('click', doSignIn);
+document.getElementById('signoutBtn').addEventListener('click', ()=> signOut(auth));
+
+document.getElementById('ageInput').addEventListener('change', e=>{
+  if(!profile) return;
+  const v = parseInt(e.target.value, 10);
+  profile.age = Number.isFinite(v) ? v : null;
+  saveProfile();
+});
+document.getElementById('genderInput').addEventListener('change', e=>{
+  if(!profile) return;
+  profile.gender = e.target.value || null;
+  saveProfile();
+});
+
+onAuthStateChanged(auth, async (user)=>{
+  currentUser = user;
+  if(user){
+    await loadProfile();
+  } else {
+    profile = null;
+    renderProfile();
+  }
 });
 </script>
 </body>
