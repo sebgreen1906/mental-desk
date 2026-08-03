@@ -252,6 +252,7 @@
   .queue-spinner{width:40px;height:40px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--amber);margin:0 auto 16px;animation:spin .9s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
   .queue-status p{color:var(--text-dim);font-size:13px;}
+  .lobby-code{font-family:var(--font-display);font-size:36px;font-weight:700;letter-spacing:.15em;color:var(--amber);margin:14px 0;}
 
   .match-hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:10px;}
   .match-side{flex:1;text-align:center;}
@@ -427,6 +428,16 @@
         <div id="hyperEliteWrap" style="margin-top:16px;display:none;"><span class="hyper-elite-badge">👑 Hyperleague Elite</span></div>
         <button class="start-btn" id="findMatchBtn" style="margin-top:22px;">Find match</button>
       </div>
+
+      <div class="panel">
+        <h2 class="section-title">Play a friend</h2>
+        <p style="font-size:13px;color:var(--text-dim);margin:0 0 14px;">Unranked — trophies aren't won or lost, just a private 1v1 for fun.</p>
+        <button class="btn-secondary" id="createLobbyBtn" style="width:100%;">Create private match</button>
+        <div class="friend-search-row" style="margin-top:14px;">
+          <input type="text" id="joinCodeInput" placeholder="Enter invite code" maxlength="6" style="text-transform:uppercase;" />
+          <button class="btn-secondary" id="joinLobbyBtn" style="flex:none;">Join</button>
+        </div>
+      </div>
     </div>
 
     <!-- Searching -->
@@ -436,6 +447,16 @@
         <h2 class="section-title" style="justify-content:center;">Searching for an opponent</h2>
         <p id="queueStatusText">Looking for someone around your trophy count…</p>
         <button class="btn-secondary" id="cancelQueueBtn" style="max-width:200px;margin:16px auto 0;">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Private lobby: waiting for friend -->
+    <div class="panel" id="onlineFriendWait" style="display:none;">
+      <div class="queue-status">
+        <h2 class="section-title" style="justify-content:center;">Waiting for your friend</h2>
+        <p>Share this code with them:</p>
+        <div class="lobby-code" id="lobbyCodeDisplay">------</div>
+        <button class="btn-secondary" id="cancelLobbyBtn" style="max-width:200px;margin:0 auto;">Cancel</button>
       </div>
     </div>
 
@@ -641,7 +662,10 @@ function setTick(label, value){
 document.querySelectorAll('nav.tabs button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     if(typeof onlineState !== 'undefined' && onlineState && btn.dataset.view !== 'online'){
-      const proceed = confirm('Leaving this match now forfeits it and costs you 30 trophies. Continue?');
+      const msg = onlineState.mode === 'friendly'
+        ? 'Leaving now forfeits this friendly match. Continue?'
+        : 'Leaving this match now forfeits it and costs you 30 trophies. Continue?';
+      const proceed = confirm(msg);
       if(!proceed) return;
       forfeitMatch();
     }
@@ -1200,7 +1224,7 @@ function renderOnlineGate(){
   const signedOut = document.getElementById('onlineSignedOut');
   if(!currentUser || !profile){
     signedOut.style.display = 'block';
-    ['onlineLobby','onlineQueue','onlineMatch','onlineResult'].forEach(id=>{
+    ['onlineLobby','onlineQueue','onlineFriendWait','onlineMatch','onlineResult'].forEach(id=>{
       document.getElementById(id).style.display = 'none';
     });
     return;
@@ -1210,7 +1234,7 @@ function renderOnlineGate(){
 }
 
 function showOnlinePanel(name){
-  const panels = {lobby:'onlineLobby', queue:'onlineQueue', match:'onlineMatch', result:'onlineResult'};
+  const panels = {lobby:'onlineLobby', queue:'onlineQueue', friendWait:'onlineFriendWait', match:'onlineMatch', result:'onlineResult'};
   Object.entries(panels).forEach(([k,id])=>{
     document.getElementById(id).style.display = (k===name) ? 'block' : 'none';
   });
@@ -1320,6 +1344,7 @@ async function tryClaimMatch(opponentUid){
         playerIds: [currentUser.uid, opponentUid],
         playerNames: { [currentUser.uid]: profile.displayName, [opponentUid]: oppData.displayName || 'Opponent' },
         playerTrophies: { [currentUser.uid]: profile.trophies || 0, [opponentUid]: oppData.trophies || 0 },
+        mode: 'ranked',
         startedAt: Date.now(),
         status: 'active'
       });
@@ -1350,6 +1375,97 @@ function cancelMatchmaking(){
   showOnlinePanel('lobby');
 }
 
+/* ================= ONLINE: FRIEND LOBBY (unranked, invite code) ================= */
+const LOBBY_CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no 0/O or 1/I/L — avoids misreads
+let lobbyState = null;
+
+function generateLobbyCode(){
+  let code = '';
+  for(let i=0;i<6;i++) code += LOBBY_CODE_CHARS[randInt(0, LOBBY_CODE_CHARS.length-1)];
+  return code;
+}
+
+async function createFriendLobby(){
+  let code, ref, snap;
+  for(let attempt=0; attempt<5; attempt++){
+    code = generateLobbyCode();
+    ref = doc(db, 'lobbies', code);
+    snap = await getDoc(ref);
+    if(!snap.exists()) break;
+  }
+  try {
+    await setDoc(ref, {
+      code, hostUid: currentUser.uid, hostName: profile.displayName,
+      hostAvatarPreset: profile.avatarPreset || null, hostPhotoURL: profile.photoURL || '',
+      hostTrophies: profile.trophies || 0,
+      guestUid: null, status:'waiting', matchId: null, createdAt: Date.now()
+    });
+  } catch(err){
+    console.error('Failed to create private match', err);
+    alert('Could not create a private match — try again.');
+    return;
+  }
+
+  lobbyState = { code, unsub: null };
+  document.getElementById('lobbyCodeDisplay').textContent = code;
+  showOnlinePanel('friendWait');
+
+  lobbyState.unsub = onSnapshot(ref, (s)=>{
+    const data = s.data();
+    if(data && data.status === 'matched' && data.matchId){
+      if(lobbyState && lobbyState.unsub) lobbyState.unsub();
+      lobbyState = null;
+      enterMatch(data.matchId);
+    }
+  });
+}
+
+async function joinFriendLobby(rawCode){
+  const code = (rawCode || '').trim().toUpperCase();
+  if(!code) return;
+  const ref = doc(db, 'lobbies', code);
+  const matchId = `friendly_${code}_${Date.now()}`;
+  try {
+    await runTransaction(db, async (tx)=>{
+      const snap = await tx.get(ref);
+      if(!snap.exists()) throw new Error('That invite code was not found.');
+      const data = snap.data();
+      if(data.status !== 'waiting') throw new Error('That invite is no longer available.');
+      if(data.hostUid === currentUser.uid) throw new Error("You can't join your own private match.");
+      tx.update(ref, { status:'matched', guestUid: currentUser.uid, matchId });
+      tx.set(doc(db,'matches', matchId), {
+        playerIds: [data.hostUid, currentUser.uid],
+        playerNames: { [data.hostUid]: data.hostName, [currentUser.uid]: profile.displayName },
+        playerTrophies: { [data.hostUid]: data.hostTrophies||0, [currentUser.uid]: profile.trophies||0 },
+        mode: 'friendly',
+        startedAt: Date.now(),
+        status: 'active'
+      });
+    });
+  } catch(err){
+    alert(err.message || 'Could not join that private match.');
+    return;
+  }
+  enterMatch(matchId);
+}
+
+function cancelFriendLobby(){
+  if(lobbyState){
+    if(lobbyState.unsub) lobbyState.unsub();
+    deleteDoc(doc(db,'lobbies', lobbyState.code)).catch(()=>{});
+  }
+  lobbyState = null;
+  showOnlinePanel('lobby');
+}
+
+document.getElementById('createLobbyBtn').addEventListener('click', createFriendLobby);
+document.getElementById('joinLobbyBtn').addEventListener('click', ()=>
+  joinFriendLobby(document.getElementById('joinCodeInput').value));
+document.getElementById('joinCodeInput').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') joinFriendLobby(e.target.value);
+});
+document.getElementById('cancelLobbyBtn').addEventListener('click', cancelFriendLobby);
+
 /* ================= ONLINE: LIVE MATCH ================= */
 const ONLINE_OPS = ['+','-','×','÷'];
 
@@ -1363,7 +1479,7 @@ async function enterMatch(matchId){
   const oppUid = matchData.playerIds.find(id => id !== currentUser.uid);
 
   onlineState = {
-    matchId, oppUid, isBot:false,
+    matchId, oppUid, isBot:false, mode: matchData.mode || 'ranked',
     startedAt: matchData.startedAt,
     oppTrophiesAtStart: matchData.playerTrophies ? matchData.playerTrophies[oppUid] : (profile.trophies||0),
     myScore:0, myWrong:0, myStreak:0, myBestStreak:0, myMatchScore:0,
@@ -1414,7 +1530,7 @@ function startBotMatch(){
   if((profile.onlineWinStreak||0) >= 3) target = target + Math.round(profile.onlineWinStreak * 0.5);
 
   onlineState = {
-    matchId:null, oppUid:'bot', isBot:true, botStreak:0,
+    matchId:null, oppUid:'bot', isBot:true, mode:'ranked', botStreak:0,
     botTargetCorrect: target, botCorrectCount: 0, botTicks: 0,
     botTrophies: Math.max(0, (profile.trophies||0) + randInt(-80,80)),
     startedAt: Date.now(),
@@ -1533,16 +1649,19 @@ function forfeitMatch(){
   if(onlineState.oppUnsub) onlineState.oppUnsub();
 
   const isBot = onlineState.isBot;
+  const isFriendly = onlineState.mode === 'friendly';
   const matchId = onlineState.matchId;
 
-  const trophiesBefore = profile.trophies || 0;
-  profile.trophies = Math.max(0, trophiesBefore - 30);
-  profile.onlineLosses = (profile.onlineLosses||0) + 1;
-  profile.onlineLossStreak = (profile.onlineLossStreak||0) + 1;
-  profile.onlineWinStreak = 0;
+  if(!isFriendly){
+    const trophiesBefore = profile.trophies || 0;
+    profile.trophies = Math.max(0, trophiesBefore - 30);
+    profile.onlineLosses = (profile.onlineLosses||0) + 1;
+    profile.onlineLossStreak = (profile.onlineLossStreak||0) + 1;
+    profile.onlineWinStreak = 0;
 
-  applyProfileToTicker();
-  saveProfile();
+    applyProfileToTicker();
+    saveProfile();
+  }
 
   if(!isBot && matchId){
     updateDoc(doc(db,'matches', matchId), { status:'forfeited' }).catch(()=>{});
@@ -1562,6 +1681,7 @@ function endMatch(){
   const oppMatchScore = onlineState.oppMatchScore;
   const myRaw = onlineState.myScore;
   const isBot = onlineState.isBot;
+  const isFriendly = onlineState.mode === 'friendly';
   const matchId = onlineState.matchId;
   const oppUid = onlineState.oppUid;
   const oppTrophies = onlineState.oppTrophiesAtStart ?? (profile.trophies||0);
@@ -1573,34 +1693,38 @@ function endMatch(){
     iWon = currentUser.uid < (oppUid || 'zzzz');
   }
 
-  const delta = trophyDelta(profile.trophies||0, oppTrophies, iWon);
-  const beforeLeague = leagueForTrophies(profile.trophies||0);
-  const wasOnLossStreak = (profile.onlineLossStreak||0) >= 3;
-  const trophiesBefore = profile.trophies||0;
+  let actualDelta = 0, beforeLeague = null, afterLeague = null;
 
-  if(iWon){
-    profile.trophies = Math.min(TROPHY_CAP, (profile.trophies||0) + delta);
-    profile.onlineWins = (profile.onlineWins||0) + 1;
-    profile.onlineWinStreak = (profile.onlineWinStreak||0) + 1;
-    profile.onlineLossStreak = 0;
-  } else {
-    profile.trophies = Math.max(0, (profile.trophies||0) - delta);
-    profile.onlineLosses = (profile.onlineLosses||0) + 1;
-    profile.onlineLossStreak = (profile.onlineLossStreak||0) + 1;
-    profile.onlineWinStreak = 0;
+  if(!isFriendly){
+    const delta = trophyDelta(profile.trophies||0, oppTrophies, iWon);
+    beforeLeague = leagueForTrophies(profile.trophies||0);
+    const wasOnLossStreak = (profile.onlineLossStreak||0) >= 3;
+    const trophiesBefore = profile.trophies||0;
+
+    if(iWon){
+      profile.trophies = Math.min(TROPHY_CAP, (profile.trophies||0) + delta);
+      profile.onlineWins = (profile.onlineWins||0) + 1;
+      profile.onlineWinStreak = (profile.onlineWinStreak||0) + 1;
+      profile.onlineLossStreak = 0;
+    } else {
+      profile.trophies = Math.max(0, (profile.trophies||0) - delta);
+      profile.onlineLosses = (profile.onlineLosses||0) + 1;
+      profile.onlineLossStreak = (profile.onlineLossStreak||0) + 1;
+      profile.onlineWinStreak = 0;
+    }
+    actualDelta = Math.abs(profile.trophies - trophiesBefore);
+    profile.peakTrophies = Math.max(profile.peakTrophies||0, profile.trophies);
+    afterLeague = leagueForTrophies(profile.trophies);
+
+    profile._justComeback = (iWon && wasOnLossStreak);
+    ACHIEVEMENTS.forEach(a=>{
+      if(a.check(profile) && !profile.banners.includes(a.id)) profile.banners.push(a.id);
+    });
+    delete profile._justComeback;
+
+    applyProfileToTicker();
+    saveProfile();
   }
-  const actualDelta = Math.abs(profile.trophies - trophiesBefore);
-  profile.peakTrophies = Math.max(profile.peakTrophies||0, profile.trophies);
-  const afterLeague = leagueForTrophies(profile.trophies);
-
-  profile._justComeback = (iWon && wasOnLossStreak);
-  ACHIEVEMENTS.forEach(a=>{
-    if(a.check(profile) && !profile.banners.includes(a.id)) profile.banners.push(a.id);
-  });
-  delete profile._justComeback;
-
-  applyProfileToTicker();
-  saveProfile();
 
   if(!isBot && matchId){
     updateDoc(doc(db,'matches', matchId), { status:'finished' }).catch(()=>{});
@@ -1613,14 +1737,20 @@ function endMatch(){
   document.getElementById('resultScoreLine').textContent =
     `${Math.round(myMatchScore)} – ${Math.round(oppMatchScore)} (${myRaw} correct)`;
   const deltaEl = document.getElementById('resultTrophyDelta');
-  deltaEl.textContent = iWon ? `+${actualDelta} trophies` : `-${actualDelta} trophies`;
-  deltaEl.className = 'trophy-delta ' + (iWon ? 'up' : 'down');
   const transEl = document.getElementById('resultLeagueTransition');
-  if(beforeLeague.id !== afterLeague.id){
-    transEl.textContent = (LEAGUES.indexOf(afterLeague) > LEAGUES.indexOf(beforeLeague))
-      ? `Promoted to ${afterLeague.name}!` : `Demoted to ${afterLeague.name}.`;
-  } else {
+  if(isFriendly){
+    deltaEl.textContent = 'Friendly match — no trophies at stake';
+    deltaEl.className = 'trophy-delta';
     transEl.textContent = '';
+  } else {
+    deltaEl.textContent = iWon ? `+${actualDelta} trophies` : `-${actualDelta} trophies`;
+    deltaEl.className = 'trophy-delta ' + (iWon ? 'up' : 'down');
+    if(beforeLeague.id !== afterLeague.id){
+      transEl.textContent = (LEAGUES.indexOf(afterLeague) > LEAGUES.indexOf(beforeLeague))
+        ? `Promoted to ${afterLeague.name}!` : `Demoted to ${afterLeague.name}.`;
+    } else {
+      transEl.textContent = '';
+    }
   }
 
   onlineState = null;
