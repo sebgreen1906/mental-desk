@@ -176,51 +176,6 @@
   }
   .btn-secondary:hover{border-color:var(--amber);color:var(--amber);}
 
-  /* ---------- CASE STUDIES ---------- */
-  .case-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
-  @media (max-width:720px){.case-grid{grid-template-columns:1fr;}}
-  .case-card{
-    background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px 20px;
-    cursor:pointer;transition:border-color .15s,transform .1s;
-  }
-  .case-card:hover{border-color:var(--amber);}
-  .case-card.selected{border-color:var(--amber);background:var(--panel-raised);}
-  .case-num{font-family:var(--font-mono);font-size:11px;color:var(--amber);letter-spacing:.05em;}
-  .case-title{font-family:var(--font-display);font-weight:600;font-size:16px;margin-top:4px;}
-  .case-tag{display:inline-block;margin-top:8px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);border:1px solid var(--border);padding:3px 8px;border-radius:12px;}
-
-  .worksheet{margin-top:18px;}
-  .worksheet .prompt-box{background:var(--panel-raised);border-left:3px solid var(--amber);border-radius:6px;padding:16px 18px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--text);margin-bottom:20px;}
-  .step-block{margin-bottom:20px;}
-  .step-label{font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--amber);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
-  .step-label .n{background:var(--amber);color:#0B0E11;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
-  textarea, .txt-input{
-    width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;
-    color:var(--text);font-family:var(--font-mono);font-size:13px;padding:12px;resize:vertical;
-  }
-  textarea{min-height:70px;}
-  .assumption-row{display:grid;grid-template-columns:1fr 140px 32px;gap:8px;margin-bottom:8px;}
-  @media (max-width:520px){.assumption-row{grid-template-columns:1fr 90px 28px;}}
-  .assumption-row input{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--font-mono);font-size:13px;padding:9px 10px;}
-  .row-remove{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text-faint);cursor:pointer;font-size:14px;}
-  .row-remove:hover{color:var(--red);border-color:var(--red);}
-  .add-row-btn{background:transparent;border:1px dashed var(--border);border-radius:6px;color:var(--text-dim);font-family:var(--font-mono);font-size:12px;padding:8px 12px;cursor:pointer;width:100%;}
-  .add-row-btn:hover{border-color:var(--amber);color:var(--amber);}
-
-  .final-answer-row{display:flex;gap:10px;align-items:center;}
-  .final-answer-row input{max-width:220px;}
-
-  .reveal-btn{margin-top:8px;padding:13px 18px;border:none;border-radius:8px;background:var(--amber);color:#0B0E11;font-family:var(--font-display);font-weight:700;font-size:14px;cursor:pointer;text-transform:uppercase;letter-spacing:.03em;}
-  .reveal-btn:hover{box-shadow:0 0 0 3px var(--amber-dim);}
-
-  .model-approach{margin-top:20px;background:var(--panel-alt);border:1px solid var(--green);border-radius:10px;padding:18px 20px;display:none;}
-  .model-approach.show{display:block;animation:fade-in .3s ease;}
-  .model-approach h4{margin:0 0 10px;font-family:var(--font-display);color:var(--green);font-size:13px;text-transform:uppercase;letter-spacing:.06em;}
-  .model-approach ul{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.7;color:var(--text-dim);}
-  .model-approach .final{font-family:var(--font-mono);font-size:14px;color:var(--text);border-top:1px solid var(--border);padding-top:10px;margin-top:4px;}
-  .model-approach .final b{color:var(--green);}
-  .disclaimer{font-size:11px;color:var(--text-faint);margin-top:10px;line-height:1.5;}
-
   /* ---------- HEADER ACTIONS / AUTH ---------- */
   .header-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
   .auth-widget{display:flex;align-items:center;gap:10px;}
@@ -282,6 +237,61 @@
   }
   .save-hint{font-size:11px;color:var(--text-faint);margin-top:8px;}
 
+  /* ---------- LEAGUES / ONLINE ---------- */
+  .league-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-family:var(--font-display);font-weight:700;font-size:13px;}
+  .online-hero{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+  .trophy-count{font-family:var(--font-display);font-size:34px;font-weight:700;}
+  .trophy-count .unit{font-size:13px;color:var(--text-dim);font-weight:600;margin-left:6px;}
+  .league-progress{margin-top:14px;height:8px;background:var(--panel-alt);border-radius:6px;overflow:hidden;}
+  .league-progress-fill{height:100%;background:var(--amber);border-radius:6px;transition:width .3s;}
+  .league-progress.hyper .league-progress-fill{background:linear-gradient(135deg,#FF5CD6,#F5A623,#5DD9F5);}
+  .league-range{font-size:11px;color:var(--text-faint);margin-top:6px;}
+  .streak-note{font-size:11px;color:var(--text-faint);margin-top:10px;}
+
+  .queue-status{text-align:center;padding:30px 20px;}
+  .queue-spinner{width:40px;height:40px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--amber);margin:0 auto 16px;animation:spin .9s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .queue-status p{color:var(--text-dim);font-size:13px;}
+
+  .match-hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:10px;}
+  .match-side{flex:1;text-align:center;}
+  .match-side .pname{font-size:12px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .match-side .pscore{font-family:var(--font-display);font-size:30px;font-weight:700;color:var(--text);}
+  .match-side.me .pscore{color:var(--amber);}
+  .match-vs{font-family:var(--font-display);font-size:13px;color:var(--text-faint);padding:0 10px;}
+  .match-clock{text-align:center;font-family:var(--font-display);font-weight:700;font-size:20px;color:var(--amber);margin-bottom:14px;}
+
+  .result-banner{text-align:center;padding:10px;}
+  .result-banner .outcome{font-family:var(--font-display);font-size:26px;font-weight:700;}
+  .result-banner .outcome.win{color:var(--green);}
+  .result-banner .outcome.loss{color:var(--red);}
+  .trophy-delta{font-family:var(--font-display);font-size:18px;margin-top:8px;}
+  .trophy-delta.up{color:var(--green);}
+  .trophy-delta.down{color:var(--red);}
+  .league-transition{margin-top:10px;font-size:13px;color:var(--text-dim);}
+
+  .hyper-elite-badge{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:20px;
+    background:linear-gradient(135deg,#FFD700,#FFF3C4,#FFD700);color:#5A4300;font-family:var(--font-display);font-weight:700;font-size:13px;
+    box-shadow:0 0 16px rgba(255,215,0,.55);}
+
+  /* ---------- FRIENDS ---------- */
+  .friend-search-row{display:flex;gap:10px;}
+  .friend-search-row input{
+    flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+    color:var(--text);font-family:var(--font-mono);font-size:13px;padding:10px 12px;
+  }
+  .friend-result-list, .friend-list, .request-list{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+  .friend-row{display:flex;align-items:center;gap:12px;background:var(--panel-alt);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+  .friend-row .favatar{width:36px;height:36px;border-radius:50%;background:var(--panel-raised);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;flex-shrink:0;}
+  .friend-row .finfo{flex:1;min-width:0;}
+  .friend-row .fname{font-family:var(--font-display);font-weight:600;font-size:14px;}
+  .friend-row .fmeta{font-size:11px;color:var(--text-faint);margin-top:2px;}
+  .btn-small{padding:8px 14px;font-size:12px;border-radius:6px;border:1px solid var(--border);background:var(--panel-raised);color:var(--text);cursor:pointer;font-family:var(--font-display);font-weight:600;white-space:nowrap;}
+  .btn-small:hover{border-color:var(--amber);color:var(--amber);}
+  .btn-small.accept{border-color:var(--green);color:var(--green);}
+  .btn-small.decline{border-color:var(--red);color:var(--red);}
+  .empty-note{font-size:13px;color:var(--text-faint);text-align:center;padding:16px 0;}
+
   footer.foot{text-align:center;margin-top:40px;font-size:11px;color:var(--text-faint);letter-spacing:.04em;}
 </style>
 </head>
@@ -300,7 +310,8 @@
     <div class="header-actions">
       <nav class="tabs">
         <button class="active" data-view="drill">Speed Drills</button>
-        <button data-view="cases">Case Studies</button>
+        <button data-view="online">Online</button>
+        <button data-view="friends">Friends</button>
         <button data-view="profile">Profile</button>
       </nav>
       <div class="auth-widget" id="authWidget">
@@ -389,44 +400,112 @@
     </div>
   </section>
 
-  <!-- ============ CASE STUDIES VIEW ============ -->
-  <section class="view" id="view-cases">
-    <h2 class="section-title">Pick a guesstimate</h2>
-    <div class="case-grid" id="caseGrid"></div>
+  <!-- ============ ONLINE VIEW ============ -->
+  <section class="view" id="view-online">
 
-    <div class="panel worksheet" id="worksheet" style="display:none;">
-      <div class="prompt-box" id="casePrompt"></div>
-
-      <div class="step-block">
-        <div class="step-label"><span class="n">1</span>Frame the problem</div>
-        <textarea id="frameInput" placeholder="What's the shape of this problem? e.g. total = volume of the space ÷ volume per ball, or population × spend per person × frequency..."></textarea>
+    <div class="panel" id="onlineSignedOut" style="display:none;">
+      <div class="signedout-panel">
+        <h2 class="section-title" style="justify-content:center;">Ranked online</h2>
+        <p>Sign in with Google to climb the league ladder against other players.</p>
+        <button class="start-btn" id="onlineSigninBtn" style="max-width:280px;margin:0 auto;">Sign in with Google</button>
       </div>
+    </div>
 
-      <div class="step-block">
-        <div class="step-label"><span class="n">2</span>Assumptions &amp; estimates</div>
-        <div id="assumptionRows"></div>
-        <button class="add-row-btn" id="addRowBtn">+ Add assumption</button>
+    <!-- Lobby -->
+    <div id="onlineLobby" style="display:none;">
+      <div class="panel">
+        <div class="online-hero">
+          <div>
+            <div id="lobbyLeagueBadge"></div>
+            <div class="trophy-count" style="margin-top:10px;"><span id="lobbyTrophies">0</span><span class="unit">trophies</span></div>
+          </div>
+          <div style="min-width:220px;flex:1;">
+            <div class="league-progress" id="lobbyProgressWrap"><div class="league-progress-fill" id="lobbyProgressFill" style="width:0%;"></div></div>
+            <div class="league-range" id="lobbyRange"></div>
+          </div>
+        </div>
+        <div id="hyperEliteWrap" style="margin-top:16px;display:none;"><span class="hyper-elite-badge">👑 Hyperleague Elite</span></div>
+        <button class="start-btn" id="findMatchBtn" style="margin-top:22px;">Find match</button>
       </div>
+    </div>
 
-      <div class="step-block">
-        <div class="step-label"><span class="n">3</span>Show your math</div>
-        <textarea id="calcInput" placeholder="Walk through the arithmetic step by step..."></textarea>
+    <!-- Searching -->
+    <div class="panel" id="onlineQueue" style="display:none;">
+      <div class="queue-status">
+        <div class="queue-spinner"></div>
+        <h2 class="section-title" style="justify-content:center;">Searching for an opponent</h2>
+        <p id="queueStatusText">Looking for someone around your trophy count…</p>
+        <button class="btn-secondary" id="cancelQueueBtn" style="max-width:200px;margin:16px auto 0;">Cancel</button>
       </div>
+    </div>
 
-      <div class="step-block">
-        <div class="step-label"><span class="n">4</span>Final estimate</div>
-        <div class="final-answer-row">
-          <input class="txt-input" id="finalAnswerInput" placeholder="Your number" />
+    <!-- Live match -->
+    <div class="panel" id="onlineMatch" style="display:none;">
+      <div class="match-clock" id="matchClock">60</div>
+      <div class="match-hud">
+        <div class="match-side me">
+          <div class="pname">You</div>
+          <div class="pscore" id="matchMyScore">0</div>
+        </div>
+        <div class="match-vs">VS</div>
+        <div class="match-side">
+          <div class="pname" id="matchOppName">Opponent</div>
+          <div class="pscore" id="matchOppScore">0</div>
         </div>
       </div>
+      <div class="problem-card" id="matchProblemCard">
+        <div class="problem-text" id="matchProblemText">–</div>
+        <div class="answer-row">
+          <input class="answer-input" id="matchAnswerInput" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="?" />
+          <button class="submit-btn" id="matchSubmitBtn">Submit</button>
+        </div>
+      </div>
+    </div>
 
-      <button class="reveal-btn" id="revealBtn">Reveal a model approach</button>
+    <!-- Results -->
+    <div class="panel" id="onlineResult" style="display:none;">
+      <div class="result-banner">
+        <div class="outcome" id="resultOutcome">You win</div>
+        <div style="margin-top:10px;font-size:14px;color:var(--text-dim);" id="resultScoreLine"></div>
+        <div class="trophy-delta" id="resultTrophyDelta"></div>
+        <div class="league-transition" id="resultLeagueTransition"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-secondary" id="rematchBtn">Find another match</button>
+        <button class="btn-secondary" id="onlineDoneBtn">Back to lobby</button>
+      </div>
+    </div>
+  </section>
 
-      <div class="model-approach" id="modelApproach">
-        <h4>One reasonable approach</h4>
-        <ul id="modelAssumptions"></ul>
-        <div class="final" id="modelFinal"></div>
-        <div class="disclaimer">This is one defensible path, not the "correct" answer — in these interviews the reasoning and sanity-checking matter more than hitting an exact number. Compare your structure, not just your final digit.</div>
+  <!-- ============ FRIENDS VIEW ============ -->
+  <section class="view" id="view-friends">
+
+    <div class="panel" id="friendsSignedOut" style="display:none;">
+      <div class="signedout-panel">
+        <h2 class="section-title" style="justify-content:center;">Friends</h2>
+        <p>Sign in with Google to add friends and compare progress.</p>
+        <button class="start-btn" id="friendsSigninBtn" style="max-width:280px;margin:0 auto;">Sign in with Google</button>
+      </div>
+    </div>
+
+    <div id="friendsSignedIn" style="display:none;">
+      <div class="panel">
+        <h2 class="section-title">Find players</h2>
+        <div class="friend-search-row">
+          <input type="text" id="friendSearchInput" placeholder="Search by display name…" />
+          <button class="btn-secondary" id="friendSearchBtn" style="flex:none;">Search</button>
+        </div>
+        <div class="friend-result-list" id="friendResultList"></div>
+      </div>
+
+      <div class="panel">
+        <h2 class="section-title">Friend requests</h2>
+        <div class="request-list" id="requestList"></div>
+      </div>
+
+      <div class="panel">
+        <h2 class="section-title">Your friends</h2>
+        <div class="friend-list" id="friendList"></div>
       </div>
     </div>
   </section>
@@ -459,6 +538,21 @@
       </div>
 
       <div class="panel">
+        <h2 class="section-title">Ranked</h2>
+        <div class="online-hero">
+          <div>
+            <div id="profileLeagueBadge"></div>
+            <div class="trophy-count" style="margin-top:10px;"><span id="profileTrophies">0</span><span class="unit">trophies</span></div>
+          </div>
+          <div style="min-width:220px;flex:1;">
+            <div class="league-progress" id="profileProgressWrap"><div class="league-progress-fill" id="profileProgressFill" style="width:0%;"></div></div>
+            <div class="league-range" id="profileRange"></div>
+          </div>
+        </div>
+        <div id="profileHyperEliteWrap" style="margin-top:16px;display:none;"><span class="hyper-elite-badge">👑 Hyperleague Elite</span></div>
+      </div>
+
+      <div class="panel">
         <h2 class="section-title">Lifetime stats</h2>
         <div class="summary-grid">
           <div class="summary-stat"><div class="num" id="profTotalCorrect">0</div><div class="lab">Correct answers</div></div>
@@ -469,8 +563,13 @@
       </div>
 
       <div class="panel">
-        <h2 class="section-title">Achievement banners</h2>
-        <div class="banner-row" id="bannerRow"></div>
+        <h2 class="section-title">Practice banners</h2>
+        <div class="banner-row" id="bannerRowOffline"></div>
+      </div>
+
+      <div class="panel">
+        <h2 class="section-title">Online banners</h2>
+        <div class="banner-row" id="bannerRowOnline"></div>
       </div>
 
       <div class="panel">
@@ -505,7 +604,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc }
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot,
+  collection, query, where, orderBy, limit, startAt, endAt, getDocs, runTransaction }
   from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 /* ================= FIREBASE CONFIG ================= */
@@ -524,7 +624,7 @@ const db = getFirestore(firebaseApp);
 /* ================= TICKER ================= */
 const tickerData = [
   {l:'STREAK', v:'0'}, {l:'ACCURACY', v:'—'}, {l:'AVG TIME', v:'—'},
-  {l:'SESSIONS RUN', v:'0'}, {l:'CASES REVIEWED', v:'0'}, {l:'BEST STREAK', v:'0'}
+  {l:'SESSIONS RUN', v:'0'}, {l:'TROPHIES', v:'0'}, {l:'BEST STREAK', v:'0'}
 ];
 function renderTicker(){
   const track = document.getElementById('tickerTrack');
@@ -544,6 +644,8 @@ document.querySelectorAll('nav.tabs button').forEach(btn=>{
     btn.classList.add('active');
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    if(btn.dataset.view === 'online') renderOnlineGate();
+    if(btn.dataset.view === 'friends') renderFriendsGate();
   });
 });
 
@@ -591,23 +693,23 @@ document.querySelectorAll('#lengthChips .chip').forEach(chip=>{
 /* ================= PROBLEM GENERATION ================= */
 function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 
-function addSubRange(){
-  return difficulty==='easy' ? [1,9] : [10,99]; // hard & expert both use double-digit + / −
+function addSubRange(diff){
+  return diff==='easy' ? [1,9] : [10,99]; // hard & expert both use double-digit + / −
 }
-function multPair(){
-  if(difficulty==='easy'){
+function multPair(diff){
+  if(diff==='easy'){
     return [randInt(1,9), randInt(1,9)];
-  } else if(difficulty==='hard'){
+  } else if(diff==='hard'){
     const two = randInt(10,99), one = randInt(1,9);
     return Math.random()<0.5 ? [two,one] : [one,two];
   }
   return [randInt(10,99), randInt(10,99)]; // expert
 }
-function divPair(){
-  if(difficulty==='easy'){
+function divPair(diff){
+  if(diff==='easy'){
     const d = randInt(1,9), q = randInt(1,9);
     return {d, q, dividend: d*q};
-  } else if(difficulty==='hard'){
+  } else if(diff==='hard'){
     const d = randInt(2,9); // single-digit divisor
     const qlo = Math.max(1, Math.ceil(10/d));
     const qhi = Math.floor(99/d);
@@ -617,21 +719,21 @@ function divPair(){
   const d = randInt(10,99), q = randInt(10,99); // expert: double ÷ double
   return {d, q, dividend: d*q};
 }
-function genProblem(){
-  const op = ops[randInt(0,ops.length-1)];
+function genProblem(opsList, diff){
+  const op = opsList[randInt(0,opsList.length-1)];
   let a,b,answer,text;
   if(op==='+'){
-    const r = addSubRange();
+    const r = addSubRange(diff);
     a=randInt(r[0],r[1]); b=randInt(r[0],r[1]); answer=a+b; text=`${a} + ${b}`;
   } else if(op==='-'){
-    const r = addSubRange();
+    const r = addSubRange(diff);
     a=randInt(r[0],r[1]); b=randInt(r[0],r[1]);
     if(b>a){ [a,b]=[b,a]; }
     answer=a-b; text=`${a} − ${b}`;
   } else if(op==='×'){
-    [a,b] = multPair(); answer=a*b; text=`${a} × ${b}`;
+    [a,b] = multPair(diff); answer=a*b; text=`${a} × ${b}`;
   } else { // division, always integer by construction
-    const res = divPair(); answer=res.q; text=`${res.dividend} ÷ ${res.d}`;
+    const res = divPair(diff); answer=res.q; text=`${res.dividend} ÷ ${res.d}`;
   }
   return {text, answer};
 }
@@ -669,7 +771,7 @@ function startSession(){
 }
 
 function nextProblem(){
-  session.current = genProblem();
+  session.current = genProblem(ops, difficulty);
   document.getElementById('problemText').textContent = session.current.text;
   const input = document.getElementById('answerInput');
   input.value='';
@@ -771,159 +873,21 @@ document.getElementById('reconfigBtn').addEventListener('click', ()=>{
   document.getElementById('drillSettings').style.display='block';
 });
 
-/* ================= CASE STUDIES ================= */
-const cases = [
-  {
-    title:'Ping pong balls in a Boeing 747',
-    tag:'Volume packing',
-    prompt:'How many ping pong balls would fit inside a Boeing 747 aircraft?',
-    assumptions:[
-      'Usable interior volume of a 747 (cabin + cargo hold) ≈ 800 m³, after subtracting seats, galleys, aisles',
-      'A ping pong ball is ~40mm diameter → volume ≈ 33.5 cm³',
-      'Sphere packing efficiency in a container ≈ 60% (spheres never fill 100% of space)',
-    ],
-    calc:'800 m³ = 800,000,000 cm³. Usable volume after packing loss = 800,000,000 × 0.6 = 480,000,000 cm³. Divide by ball volume: 480,000,000 ÷ 33.5 ≈ 14,300,000 balls.',
-    final:'≈ 14 million ping pong balls'
-  },
-  {
-    title:'Piano tuners in Chicago',
-    tag:'Classic Fermi',
-    prompt:'Estimate the number of professional piano tuners working in Chicago.',
-    assumptions:[
-      'Chicago metro population ≈ 9 million people, ≈ 3 million households',
-      'Roughly 1 in 20 households owns a piano that gets tuned',
-      'A piano is tuned about once a year',
-      'A tuner works ~250 days/year, does ~4 tunings/day → ~1,000 tunings/year per tuner',
-    ],
-    calc:'Pianos needing tuning per year = 3,000,000 ÷ 20 = 150,000. Tuners required = 150,000 ÷ 1,000 = 150.',
-    final:'≈ 150 piano tuners'
-  },
-  {
-    title:'Gas stations in the United States',
-    tag:'Density scaling',
-    prompt:'How many gas stations are there in the United States?',
-    assumptions:[
-      'US population ≈ 330 million',
-      'Roughly 1 car per 1.3 people → ~250 million registered vehicles',
-      'One gas station comfortably serves ~2,000 vehicles in its local area',
-    ],
-    calc:'250,000,000 ÷ 2,000 = 125,000 stations.',
-    final:'≈ 125,000 gas stations (actual figure is close, around 145,000)'
-  },
-  {
-    title:'Windows in New York City',
-    tag:'Stock estimation',
-    prompt:'Estimate the total number of windows in New York City.',
-    assumptions:[
-      'NYC has about 3.5 million residential units (apartments + houses)',
-      'Average unit has ~6 windows',
-      'Add commercial/office buildings: ~1 million commercial windows citywide, scaled for high-rises',
-    ],
-    calc:'Residential: 3,500,000 × 6 = 21,000,000. Add commercial estimate: 21,000,000 + 4,000,000 ≈ 25,000,000.',
-    final:'≈ 25 million windows'
-  },
-  {
-    title:'Annual US pizza market ($ value)',
-    tag:'Revenue sizing',
-    prompt:'What is the total dollar value of pizza sold in the United States in a year?',
-    assumptions:[
-      'US population ≈ 330 million',
-      'Average person eats pizza ≈ 6 times per year (rough, varies widely by age)',
-      'Average price paid per pizza-eating occasion ≈ $12',
-    ],
-    calc:'330,000,000 × 6 × $12 = $23,760,000,000.',
-    final:'≈ $24 billion per year'
-  },
-  {
-    title:'Golf balls that fit in a school bus',
-    tag:'Volume packing',
-    prompt:'How many golf balls would fit inside a standard school bus?',
-    assumptions:[
-      'Interior cargo volume of a school bus ≈ 60 m³ once seats are stripped out (or treat seats as filled space and use ~35 m³ if keeping seats)',
-      'A golf ball is ~42.7mm diameter → volume ≈ 40.7 cm³',
-      'Sphere packing efficiency ≈ 60%',
-    ],
-    calc:'60 m³ = 60,000,000 cm³ × 0.6 = 36,000,000 cm³ usable. 36,000,000 ÷ 40.7 ≈ 885,000 balls.',
-    final:'≈ 880,000 golf balls'
-  }
-];
-
-const caseGrid = document.getElementById('caseGrid');
-let casesReviewed = new Set();
-
-cases.forEach((c,i)=>{
-  const card = document.createElement('div');
-  card.className='case-card';
-  card.innerHTML = `<div class="case-num">CASE ${String(i+1).padStart(2,'0')}</div>
-    <div class="case-title">${c.title}</div>
-    <div class="case-tag">${c.tag}</div>`;
-  card.addEventListener('click', ()=> openCase(i, card));
-  caseGrid.appendChild(card);
-});
-
-let currentCase = null;
-let assumptionRowCount = 0;
-
-function openCase(i, cardEl){
-  currentCase = cases[i];
-  document.querySelectorAll('.case-card').forEach(c=>c.classList.remove('selected'));
-  cardEl.classList.add('selected');
-
-  document.getElementById('worksheet').style.display='block';
-  document.getElementById('casePrompt').textContent = currentCase.prompt;
-  document.getElementById('frameInput').value='';
-  document.getElementById('calcInput').value='';
-  document.getElementById('finalAnswerInput').value='';
-  document.getElementById('modelApproach').classList.remove('show');
-
-  const rows = document.getElementById('assumptionRows');
-  rows.innerHTML='';
-  assumptionRowCount = 0;
-  addAssumptionRow(); addAssumptionRow();
-
-  casesReviewed.add(i);
-  setTick('CASES REVIEWED', casesReviewed.size);
-
-  document.getElementById('worksheet').scrollIntoView({behavior:'smooth', block:'nearest'});
-}
-
-function addAssumptionRow(){
-  assumptionRowCount++;
-  const row = document.createElement('div');
-  row.className='assumption-row';
-  row.innerHTML = `
-    <input type="text" placeholder="Assumption, e.g. households in the city" />
-    <input type="text" placeholder="Estimate" />
-    <button class="row-remove" title="Remove">×</button>`;
-  row.querySelector('.row-remove').addEventListener('click', ()=> row.remove());
-  document.getElementById('assumptionRows').appendChild(row);
-}
-document.getElementById('addRowBtn').addEventListener('click', addAssumptionRow);
-
-document.getElementById('revealBtn').addEventListener('click', ()=>{
-  if(!currentCase) return;
-  const ul = document.getElementById('modelAssumptions');
-  ul.innerHTML='';
-  currentCase.assumptions.forEach(a=>{
-    const li = document.createElement('li'); li.textContent = a; ul.appendChild(li);
-  });
-  const calcLi = document.createElement('li');
-  calcLi.textContent = 'Calculation: ' + currentCase.calc;
-  ul.appendChild(calcLi);
-  document.getElementById('modelFinal').innerHTML = `Model estimate: <b>${currentCase.final}</b>`;
-  document.getElementById('modelApproach').classList.add('show');
-});
-
 /* ================= ACCOUNTS / FIREBASE ================= */
 const AVATAR_PRESETS = ['🦉','🐺','🦊','🐢','🦅','🐯','🐬','🦁'];
 
 const ACHIEVEMENTS = [
-  { id:'first_session', icon:'🎯', label:'First session',  check:p => p.totalSessions >= 1 },
-  { id:'correct_100',    icon:'🥉', label:'100 correct',    check:p => p.totalCorrect >= 100 },
-  { id:'correct_1000',   icon:'🥈', label:'1,000 correct',  check:p => p.totalCorrect >= 1000 },
-  { id:'correct_5000',   icon:'🥇', label:'5,000 correct',  check:p => p.totalCorrect >= 5000 },
-  { id:'streak_20',      icon:'🔥', label:'20-streak',      check:p => p.bestStreakEver >= 20 },
-  { id:'streak_50',      icon:'⚡', label:'50-streak',       check:p => p.bestStreakEver >= 50 },
+  { id:'first_session', icon:'🎯', label:'First session',   category:'offline', check:p => p.totalSessions >= 1 },
+  { id:'correct_100',    icon:'🥉', label:'100 correct',     category:'offline', check:p => p.totalCorrect >= 100 },
+  { id:'correct_1000',   icon:'🥈', label:'1,000 correct',   category:'offline', check:p => p.totalCorrect >= 1000 },
+  { id:'correct_5000',   icon:'🥇', label:'5,000 correct',   category:'offline', check:p => p.totalCorrect >= 5000 },
+  { id:'streak_20',      icon:'🔥', label:'20-streak',       category:'offline', check:p => p.bestStreakEver >= 20 },
+  { id:'streak_50',      icon:'⚡', label:'50-streak',        category:'offline', check:p => p.bestStreakEver >= 50 },
+  { id:'online_first_win', icon:'🏁', label:'First win',      category:'online', check:p => (p.onlineWins||0) >= 1 },
+  { id:'online_wins_10',   icon:'🗡️', label:'10 wins',        category:'online', check:p => (p.onlineWins||0) >= 10 },
+  { id:'online_wins_50',   icon:'⚔️', label:'50 wins',        category:'online', check:p => (p.onlineWins||0) >= 50 },
+  { id:'comeback',         icon:'🔁', label:'Comeback',       category:'online', check:p => p._justComeback === true },
+  { id:'hyper_elite',      icon:'👑', label:'Hyperleague Elite', category:'online', check:p => (p.peakTrophies||0) >= 2500 },
 ];
 
 function defaultProfile(user){
@@ -941,9 +905,45 @@ function defaultProfile(user){
     banners: [],
     age: null,
     gender: null,
+    trophies: 0,
+    peakTrophies: 0,
+    onlineWinStreak: 0,
+    onlineLossStreak: 0,
+    onlineWins: 0,
+    onlineLosses: 0,
+    friends: [],
     createdAt: Date.now(),
     updatedAt: Date.now()
   };
+}
+
+/* ================= LEAGUES / TROPHIES ================= */
+const LEAGUES = [
+  { id:'iron',    name:'Iron',        min:0,    max:499,  icon:'🔩', color:'#8B94A3' },
+  { id:'bronze',  name:'Bronze',      min:500,  max:999,  icon:'🥉', color:'#C97A3D' },
+  { id:'silver',  name:'Silver',      min:1000, max:1499, icon:'🥈', color:'#C7CDD6' },
+  { id:'gold',    name:'Gold',        min:1500, max:1999, icon:'🥇', color:'#F5C518' },
+  { id:'diamond', name:'Diamond',     min:2000, max:2499, icon:'💎', color:'#5DD9F5' },
+  { id:'hyper',   name:'Hyperleague', min:2500, max:3000, icon:'👑',
+    gradient:'linear-gradient(135deg,#FF5CD6,#F5A623,#5DD9F5)' },
+];
+const TROPHY_CAP = 3000;
+
+function leagueForTrophies(t){
+  return LEAGUES.find(l => t >= l.min && t <= l.max) || LEAGUES[LEAGUES.length-1];
+}
+
+function trophyDelta(myTrophies, oppTrophies, won){
+  const diff = won ? (oppTrophies - myTrophies) : (myTrophies - oppTrophies);
+  const adj = Math.max(-3, Math.min(3, Math.round(diff / 150)));
+  return 30 + adj; // 27..33
+}
+
+function leagueBadgeHtml(league){
+  const style = league.gradient
+    ? `background:${league.gradient};color:#0B0E11;`
+    : `background:${league.color};color:#0B0E11;`;
+  return `<span class="league-badge" style="${style}">${league.icon} ${league.name}</span>`;
 }
 
 let currentUser = null;
@@ -958,18 +958,49 @@ async function loadProfile(){
   const snap = await getDoc(ref);
   if(snap.exists()){
     profile = snap.data();
+    profile.trophies = profile.trophies || 0;
+    profile.peakTrophies = profile.peakTrophies || 0;
+    profile.onlineWinStreak = profile.onlineWinStreak || 0;
+    profile.onlineLossStreak = profile.onlineLossStreak || 0;
+    profile.onlineWins = profile.onlineWins || 0;
+    profile.onlineLosses = profile.onlineLosses || 0;
+    profile.friends = profile.friends || [];
   } else {
     profile = defaultProfile(currentUser);
     await setDoc(ref, profile);
   }
   applyProfileToTicker();
   renderProfile();
+  syncPublicProfile();
+  startInboxListener();
+  renderOnlineGate();
+  renderFriendsGate();
 }
 
 function saveProfile(){
   if(!currentUser || !profile) return;
   profile.updatedAt = Date.now();
   setDoc(profileRef(), profile, {merge:true}).catch(err=>console.error('Save failed', err));
+  syncPublicProfile();
+}
+
+function syncPublicProfile(){
+  if(!currentUser || !profile) return;
+  const pub = {
+    displayName: profile.displayName,
+    displayNameLower: (profile.displayName || '').toLowerCase(),
+    avatarPreset: profile.avatarPreset || null,
+    photoURL: profile.photoURL || '',
+    trophies: profile.trophies || 0,
+    peakTrophies: profile.peakTrophies || 0,
+    updatedAt: Date.now()
+  };
+  setDoc(doc(db, 'publicProfiles', currentUser.uid), pub, {merge:true})
+    .catch(err=>console.error('Public profile sync failed', err));
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 function applyProfileToTicker(){
@@ -978,6 +1009,7 @@ function applyProfileToTicker(){
   bestStreakEver = profile.bestStreakEver;
   setTick('SESSIONS RUN', sessionsRun);
   setTick('BEST STREAK', bestStreakEver);
+  setTick('TROPHIES', profile.trophies || 0);
 }
 
 function renderAvatarInto(el){
@@ -1034,24 +1066,49 @@ function renderProfile(){
   document.getElementById('profBestStreak').textContent = profile.bestStreakEver;
   document.getElementById('profBestAcc').textContent = (profile.bestSession ? profile.bestSession.accuracy : 0) + '%';
 
-  const bannerRow = document.getElementById('bannerRow');
-  bannerRow.innerHTML = '';
-  const earned = new Set(profile.banners || []);
-  if(earned.size === 0){
-    bannerRow.innerHTML = '<span class="no-banners">No banners yet — keep practicing to unlock some.</span>';
-  } else {
-    ACHIEVEMENTS.filter(a=>earned.has(a.id)).forEach(a=>{
-      const chip = document.createElement('div');
-      chip.className = 'banner-chip';
-      chip.innerHTML = `<span class="ic">${a.icon}</span>${a.label}`;
-      bannerRow.appendChild(chip);
-    });
-  }
+  renderBannerRow('bannerRowOffline', 'offline');
+  renderBannerRow('bannerRowOnline', 'online');
 
   document.getElementById('ageInput').value = profile.age || '';
   document.getElementById('genderInput').value = profile.gender || '';
 
+  renderLeagueCard('profileLeagueBadge', 'profileTrophies', 'profileProgressWrap', 'profileProgressFill', 'profileRange', 'profileHyperEliteWrap');
+
   renderAuthHeader();
+}
+
+function renderBannerRow(elId, category){
+  const row = document.getElementById(elId);
+  row.innerHTML = '';
+  const earned = new Set(profile.banners || []);
+  const inCategory = ACHIEVEMENTS.filter(a=>a.category===category);
+  const unlocked = inCategory.filter(a=>earned.has(a.id));
+  if(unlocked.length === 0){
+    row.innerHTML = '<span class="no-banners">No banners yet — keep practicing to unlock some.</span>';
+  } else {
+    unlocked.forEach(a=>{
+      const chip = document.createElement('div');
+      chip.className = 'banner-chip';
+      chip.innerHTML = `<span class="ic">${a.icon}</span>${a.label}`;
+      row.appendChild(chip);
+    });
+  }
+}
+
+function renderLeagueCard(badgeId, trophiesId, progressWrapId, progressFillId, rangeId, hyperWrapId){
+  if(!profile) return;
+  const trophies = profile.trophies || 0;
+  const league = leagueForTrophies(trophies);
+  document.getElementById(badgeId).innerHTML = leagueBadgeHtml(league);
+  document.getElementById(trophiesId).textContent = trophies;
+  const span = league.max - league.min;
+  const pct = span > 0 ? Math.min(100, Math.round(((trophies - league.min) / span) * 100)) : 100;
+  document.getElementById(progressFillId).style.width = pct + '%';
+  document.getElementById(progressWrapId).classList.toggle('hyper', league.id === 'hyper');
+  document.getElementById(rangeId).textContent = league.id === 'hyper'
+    ? `${league.min} – ${TROPHY_CAP} (cap)`
+    : `${league.min} – ${league.max}`;
+  document.getElementById(hyperWrapId).style.display = (profile.peakTrophies||0) >= 2500 ? 'block' : 'none';
 }
 
 function renderAvatarPicker(){
@@ -1133,13 +1190,592 @@ document.getElementById('genderInput').addEventListener('change', e=>{
   saveProfile();
 });
 
+/* ================= ONLINE: GATE / PANELS ================= */
+function renderOnlineGate(){
+  const signedOut = document.getElementById('onlineSignedOut');
+  if(!currentUser || !profile){
+    signedOut.style.display = 'block';
+    ['onlineLobby','onlineQueue','onlineMatch','onlineResult'].forEach(id=>{
+      document.getElementById(id).style.display = 'none';
+    });
+    return;
+  }
+  signedOut.style.display = 'none';
+  showOnlinePanel('lobby');
+}
+
+function showOnlinePanel(name){
+  const panels = {lobby:'onlineLobby', queue:'onlineQueue', match:'onlineMatch', result:'onlineResult'};
+  Object.entries(panels).forEach(([k,id])=>{
+    document.getElementById(id).style.display = (k===name) ? 'block' : 'none';
+  });
+  if(name === 'lobby') renderLobby();
+}
+
+function renderLobby(){
+  if(!profile) return;
+  renderLeagueCard('lobbyLeagueBadge','lobbyTrophies','lobbyProgressWrap','lobbyProgressFill','lobbyRange','hyperEliteWrap');
+}
+
+document.getElementById('onlineSigninBtn').addEventListener('click', doSignIn);
+document.getElementById('friendsSigninBtn').addEventListener('click', doSignIn);
+
+/* ================= ONLINE: MATCHMAKING ================= */
+const MATCH_DURATION = 60;
+let onlineState = null;
+let mmState = null;
+
+function engagementSearchCenter(){
+  let center = profile.trophies || 0;
+  if((profile.onlineLossStreak||0) >= 2) center -= Math.min(150, profile.onlineLossStreak * 40);
+  if((profile.onlineWinStreak||0) >= 3) center += Math.min(150, profile.onlineWinStreak * 30);
+  return Math.max(0, center);
+}
+
+function difficultyBias(){
+  let bias = 0;
+  if((profile.onlineLossStreak||0) >= 2) bias += Math.min(12, profile.onlineLossStreak * 3);
+  if((profile.onlineWinStreak||0) >= 3) bias -= Math.min(12, profile.onlineWinStreak * 2);
+  return bias;
+}
+
+document.getElementById('findMatchBtn').addEventListener('click', startMatchmaking);
+document.getElementById('cancelQueueBtn').addEventListener('click', cancelMatchmaking);
+
+async function startMatchmaking(){
+  showOnlinePanel('queue');
+  document.getElementById('queueStatusText').textContent = 'Looking for someone around your trophy count…';
+  const center = engagementSearchCenter();
+  mmState = { range: 100, center, cancelled: false };
+
+  try {
+    await setDoc(doc(db,'matchQueue', currentUser.uid), {
+      uid: currentUser.uid, trophies: profile.trophies || 0, searchCenter: center,
+      displayName: profile.displayName, avatarPreset: profile.avatarPreset || null,
+      photoURL: profile.photoURL || '', queuedAt: Date.now(), status: 'waiting'
+    });
+  } catch(err){
+    console.error('Failed to join matchmaking queue', err);
+  }
+
+  mmState.ownUnsub = onSnapshot(doc(db,'matchQueue', currentUser.uid), (snap)=>{
+    if(!mmState || mmState.cancelled) return;
+    const data = snap.data();
+    if(data && data.status === 'matched' && data.matchId){
+      enterMatch(data.matchId);
+    }
+  });
+
+  searchForCandidates();
+  mmState.widenTimer = setInterval(()=>{
+    if(!mmState || mmState.cancelled) return;
+    mmState.range = Math.min(500, mmState.range + 100);
+    searchForCandidates();
+  }, 3000);
+  mmState.botTimer = setTimeout(()=>{
+    if(!mmState || mmState.cancelled) return;
+    startBotMatch();
+  }, 7000);
+}
+
+async function searchForCandidates(){
+  if(!mmState || mmState.cancelled) return;
+  try {
+    const q = query(collection(db,'matchQueue'),
+      where('status','==','waiting'),
+      where('trophies','>=', mmState.center - mmState.range),
+      where('trophies','<=', mmState.center + mmState.range),
+      limit(8));
+    const snap = await getDocs(q);
+    const candidates = [];
+    snap.forEach(d=>{ if(d.id !== currentUser.uid) candidates.push(d); });
+    for(const candidate of candidates){
+      if(!mmState || mmState.cancelled) return;
+      const claimed = await tryClaimMatch(candidate.id);
+      if(claimed) return;
+    }
+  } catch(err){
+    console.error('Matchmaking search failed (if this is a "requires an index" error, click the console link to create it, then retry)', err);
+  }
+}
+
+async function tryClaimMatch(opponentUid){
+  if(!mmState || mmState.cancelled) return false;
+  const matchId = `${[currentUser.uid, opponentUid].sort().join('_')}_${Date.now()}`;
+  try {
+    await runTransaction(db, async (tx)=>{
+      const oppRef = doc(db,'matchQueue', opponentUid);
+      const oppSnap = await tx.get(oppRef);
+      if(!oppSnap.exists() || oppSnap.data().status !== 'waiting'){
+        throw new Error('opponent no longer waiting');
+      }
+      const oppData = oppSnap.data();
+      tx.update(oppRef, { status:'matched', matchId });
+      tx.set(doc(db,'matches', matchId), {
+        playerIds: [currentUser.uid, opponentUid],
+        playerNames: { [currentUser.uid]: profile.displayName, [opponentUid]: oppData.displayName || 'Opponent' },
+        playerTrophies: { [currentUser.uid]: profile.trophies || 0, [opponentUid]: oppData.trophies || 0 },
+        startedAt: Date.now(),
+        status: 'active'
+      });
+    });
+  } catch(err){
+    return false; // someone else claimed it first — try the next candidate
+  }
+  await deleteDoc(doc(db,'matchQueue', currentUser.uid)).catch(()=>{});
+  const claimedMatchId = matchId;
+  stopMatchmakingListeners();
+  enterMatch(claimedMatchId);
+  return true;
+}
+
+function stopMatchmakingListeners(){
+  if(mmState){
+    mmState.cancelled = true;
+    if(mmState.widenTimer) clearInterval(mmState.widenTimer);
+    if(mmState.botTimer) clearTimeout(mmState.botTimer);
+    if(mmState.ownUnsub) mmState.ownUnsub();
+  }
+  mmState = null;
+}
+
+function cancelMatchmaking(){
+  stopMatchmakingListeners();
+  if(currentUser) deleteDoc(doc(db,'matchQueue', currentUser.uid)).catch(()=>{});
+  showOnlinePanel('lobby');
+}
+
+/* ================= ONLINE: LIVE MATCH ================= */
+const ONLINE_OPS = ['+','-','×','÷'];
+
+async function enterMatch(matchId){
+  stopMatchmakingListeners();
+  await deleteDoc(doc(db,'matchQueue', currentUser.uid)).catch(()=>{});
+
+  const matchSnap = await getDoc(doc(db,'matches', matchId));
+  if(!matchSnap.exists()){ showOnlinePanel('lobby'); return; }
+  const matchData = matchSnap.data();
+  const oppUid = matchData.playerIds.find(id => id !== currentUser.uid);
+
+  onlineState = {
+    matchId, oppUid, isBot:false,
+    startedAt: matchData.startedAt,
+    oppTrophiesAtStart: matchData.playerTrophies ? matchData.playerTrophies[oppUid] : (profile.trophies||0),
+    myScore:0, myWrong:0, myStreak:0, myBestStreak:0, myMatchScore:0,
+    oppMatchScore:0, current:null, questionStart:0, timer:null,
+    oppName: (matchData.playerNames && matchData.playerNames[oppUid]) || 'Opponent',
+    bias: difficultyBias()
+  };
+
+  document.getElementById('matchOppName').textContent = onlineState.oppName;
+  document.getElementById('matchOppScore').textContent = '0';
+
+  await setDoc(doc(db,'matches', matchId, 'players', currentUser.uid), {
+    score:0, wrong:0, streak:0, bestStreak:0, matchScore:0, lastUpdate: Date.now()
+  }).catch(err=>console.error('Failed to initialize match player doc', err));
+
+  onlineState.oppUnsub = onSnapshot(doc(db,'matches', matchId, 'players', oppUid), (snap)=>{
+    if(snap.exists() && onlineState){
+      onlineState.oppMatchScore = snap.data().matchScore || 0;
+      document.getElementById('matchOppScore').textContent = Math.round(onlineState.oppMatchScore);
+    }
+  });
+
+  startMatchLoop();
+}
+
+function startBotMatch(){
+  stopMatchmakingListeners();
+  if(currentUser) deleteDoc(doc(db,'matchQueue', currentUser.uid)).catch(()=>{});
+
+  let botSkill = 0.75;
+  if((profile.onlineLossStreak||0) >= 2) botSkill -= Math.min(0.25, profile.onlineLossStreak * 0.05);
+  if((profile.onlineWinStreak||0) >= 3) botSkill += Math.min(0.25, profile.onlineWinStreak * 0.05);
+  botSkill = Math.max(0.35, Math.min(1.1, botSkill));
+
+  onlineState = {
+    matchId:null, oppUid:'bot', isBot:true, botSkill, botStreak:0,
+    botTrophies: Math.max(0, (profile.trophies||0) + randInt(-80,80)),
+    startedAt: Date.now(),
+    oppTrophiesAtStart: null,
+    myScore:0, myWrong:0, myStreak:0, myBestStreak:0, myMatchScore:0,
+    oppMatchScore:0, current:null, questionStart:0, timer:null,
+    oppName: 'Bot Opponent',
+    bias: difficultyBias()
+  };
+  onlineState.oppTrophiesAtStart = onlineState.botTrophies;
+
+  document.getElementById('matchOppName').textContent = onlineState.oppName;
+  document.getElementById('matchOppScore').textContent = '0';
+
+  startMatchLoop();
+  runBotSimulation();
+}
+
+function runBotSimulation(){
+  if(!onlineState || !onlineState.isBot) return;
+  const elapsed = (Date.now() - onlineState.startedAt) / 1000;
+  if(elapsed >= MATCH_DURATION) return;
+  const delay = Math.max(500, 1400 - onlineState.botSkill * 500 + randInt(-200,200));
+  onlineState.botTimeout = setTimeout(()=>{
+    if(!onlineState || !onlineState.isBot) return;
+    const correct = Math.random() < onlineState.botSkill;
+    if(correct){
+      onlineState.botStreak++;
+      const mult = onlineState.botStreak >= 10 ? 2 : onlineState.botStreak >= 5 ? 1.5 : 1;
+      onlineState.oppMatchScore = Math.round((onlineState.oppMatchScore + mult) * 10) / 10;
+    } else {
+      onlineState.botStreak = 0;
+    }
+    document.getElementById('matchOppScore').textContent = Math.round(onlineState.oppMatchScore);
+    runBotSimulation();
+  }, delay);
+}
+
+function tierForElapsed(sec, bias){
+  const t1 = 15 + bias, t2 = 35 + bias;
+  return sec < t1 ? 'easy' : sec < t2 ? 'hard' : 'expert';
+}
+
+function startMatchLoop(){
+  showOnlinePanel('match');
+  nextMatchProblem();
+  document.getElementById('matchAnswerInput').focus();
+
+  onlineState.timer = setInterval(()=>{
+    if(!onlineState) return;
+    const elapsed = Math.floor((Date.now() - onlineState.startedAt)/1000);
+    const left = Math.max(0, MATCH_DURATION - elapsed);
+    document.getElementById('matchClock').textContent = left;
+    if(left <= 0) endMatch();
+  }, 250);
+}
+
+function nextMatchProblem(){
+  const elapsed = (Date.now() - onlineState.startedAt)/1000;
+  const tier = tierForElapsed(elapsed, onlineState.bias);
+  onlineState.current = genProblem(ONLINE_OPS, tier);
+  document.getElementById('matchProblemText').textContent = onlineState.current.text;
+  const input = document.getElementById('matchAnswerInput');
+  input.value = '';
+  input.classList.remove('wrong');
+  onlineState.questionStart = performance.now();
+  input.focus();
+}
+
+function submitMatchAnswer(){
+  if(!onlineState || onlineState.current == null) return;
+  const input = document.getElementById('matchAnswerInput');
+  if(input.value.trim() === '') return;
+  const val = parseInt(input.value.trim(), 10);
+  if(val === onlineState.current.answer){
+    onlineState.myScore++;
+    onlineState.myStreak++;
+    onlineState.myBestStreak = Math.max(onlineState.myBestStreak, onlineState.myStreak);
+    const mult = onlineState.myStreak >= 10 ? 2 : onlineState.myStreak >= 5 ? 1.5 : 1;
+    onlineState.myMatchScore = Math.round((onlineState.myMatchScore + mult) * 10) / 10;
+  } else {
+    onlineState.myWrong++;
+    onlineState.myStreak = 0;
+    input.classList.add('wrong');
+  }
+  document.getElementById('matchMyScore').textContent = Math.round(onlineState.myMatchScore);
+
+  if(!onlineState.isBot){
+    updateDoc(doc(db,'matches', onlineState.matchId, 'players', currentUser.uid), {
+      score: onlineState.myScore, wrong: onlineState.myWrong, streak: onlineState.myStreak,
+      bestStreak: onlineState.myBestStreak, matchScore: onlineState.myMatchScore, lastUpdate: Date.now()
+    }).catch(err=>console.error('Match score sync failed', err));
+  }
+
+  const elapsed = (Date.now() - onlineState.startedAt)/1000;
+  if(elapsed < MATCH_DURATION) setTimeout(nextMatchProblem, 180);
+}
+
+document.getElementById('matchAnswerInput').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') submitMatchAnswer();
+});
+document.getElementById('matchSubmitBtn').addEventListener('click', submitMatchAnswer);
+document.getElementById('matchSubmitBtn').addEventListener('pointerdown', e=> e.preventDefault());
+
+function endMatch(){
+  if(!onlineState) return;
+  clearInterval(onlineState.timer);
+  if(onlineState.botTimeout) clearTimeout(onlineState.botTimeout);
+  if(onlineState.oppUnsub) onlineState.oppUnsub();
+
+  const myMatchScore = onlineState.myMatchScore;
+  const oppMatchScore = onlineState.oppMatchScore;
+  const myRaw = onlineState.myScore;
+  const isBot = onlineState.isBot;
+  const matchId = onlineState.matchId;
+  const oppUid = onlineState.oppUid;
+  const oppTrophies = onlineState.oppTrophiesAtStart ?? (profile.trophies||0);
+
+  let iWon;
+  if(myMatchScore !== oppMatchScore){
+    iWon = myMatchScore > oppMatchScore;
+  } else {
+    iWon = currentUser.uid < (oppUid || 'zzzz');
+  }
+
+  const delta = trophyDelta(profile.trophies||0, oppTrophies, iWon);
+  const beforeLeague = leagueForTrophies(profile.trophies||0);
+  const wasOnLossStreak = (profile.onlineLossStreak||0) >= 3;
+
+  if(iWon){
+    profile.trophies = Math.min(TROPHY_CAP, (profile.trophies||0) + delta);
+    profile.onlineWins = (profile.onlineWins||0) + 1;
+    profile.onlineWinStreak = (profile.onlineWinStreak||0) + 1;
+    profile.onlineLossStreak = 0;
+  } else {
+    profile.trophies = Math.max(0, (profile.trophies||0) - delta);
+    profile.onlineLosses = (profile.onlineLosses||0) + 1;
+    profile.onlineLossStreak = (profile.onlineLossStreak||0) + 1;
+    profile.onlineWinStreak = 0;
+  }
+  profile.peakTrophies = Math.max(profile.peakTrophies||0, profile.trophies);
+  const afterLeague = leagueForTrophies(profile.trophies);
+
+  profile._justComeback = (iWon && wasOnLossStreak);
+  ACHIEVEMENTS.forEach(a=>{
+    if(a.check(profile) && !profile.banners.includes(a.id)) profile.banners.push(a.id);
+  });
+  delete profile._justComeback;
+
+  applyProfileToTicker();
+  saveProfile();
+
+  if(!isBot && matchId){
+    updateDoc(doc(db,'matches', matchId), { status:'finished' }).catch(()=>{});
+  }
+
+  showOnlinePanel('result');
+  const outcomeEl = document.getElementById('resultOutcome');
+  outcomeEl.textContent = iWon ? 'You win' : 'You lose';
+  outcomeEl.className = 'outcome ' + (iWon ? 'win' : 'loss');
+  document.getElementById('resultScoreLine').textContent =
+    `${Math.round(myMatchScore)} – ${Math.round(oppMatchScore)} (${myRaw} correct)`;
+  const deltaEl = document.getElementById('resultTrophyDelta');
+  deltaEl.textContent = iWon ? `+${delta} trophies` : `-${delta} trophies`;
+  deltaEl.className = 'trophy-delta ' + (iWon ? 'up' : 'down');
+  const transEl = document.getElementById('resultLeagueTransition');
+  if(beforeLeague.id !== afterLeague.id){
+    transEl.textContent = (LEAGUES.indexOf(afterLeague) > LEAGUES.indexOf(beforeLeague))
+      ? `Promoted to ${afterLeague.name}!` : `Demoted to ${afterLeague.name}.`;
+  } else {
+    transEl.textContent = '';
+  }
+
+  onlineState = null;
+}
+
+document.getElementById('rematchBtn').addEventListener('click', startMatchmaking);
+document.getElementById('onlineDoneBtn').addEventListener('click', ()=> showOnlinePanel('lobby'));
+
+/* ================= FRIENDS ================= */
+let inboxUnsub = null;
+
+function startInboxListener(){
+  if(inboxUnsub) inboxUnsub();
+  inboxUnsub = onSnapshot(collection(db, 'users', currentUser.uid, 'inbox'), (snap)=>{
+    const requests = [];
+    snap.forEach(d=>{
+      const data = d.data();
+      if(data.type === 'friend_request'){
+        requests.push({id:d.id, ...data});
+      } else if(data.type === 'friend_accept'){
+        if(profile && !profile.friends.includes(data.byUid)){
+          profile.friends.push(data.byUid);
+          saveProfile();
+          renderFriendList();
+        }
+        deleteDoc(doc(db,'users',currentUser.uid,'inbox',d.id)).catch(()=>{});
+      }
+    });
+    renderRequestList(requests);
+  }, err=>console.error('Inbox listener failed', err));
+}
+
+function stopInboxListener(){
+  if(inboxUnsub){ inboxUnsub(); inboxUnsub = null; }
+}
+
+function renderFriendsGate(){
+  const signedOut = document.getElementById('friendsSignedOut');
+  const signedIn = document.getElementById('friendsSignedIn');
+  if(!currentUser || !profile){
+    signedOut.style.display = 'block';
+    signedIn.style.display = 'none';
+    return;
+  }
+  signedOut.style.display = 'none';
+  signedIn.style.display = 'block';
+  renderFriendList();
+}
+
+function friendGlyph(data){
+  if(data.avatarPreset) return escapeHtml(data.avatarPreset);
+  if(data.photoURL) return `<img src="${escapeHtml(data.photoURL)}" alt="" style="width:100%;height:100%;object-fit:cover;">`;
+  return '👤';
+}
+
+document.getElementById('friendSearchBtn').addEventListener('click', doFriendSearch);
+document.getElementById('friendSearchInput').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') doFriendSearch();
+});
+
+async function doFriendSearch(){
+  const term = document.getElementById('friendSearchInput').value.trim().toLowerCase();
+  const resultList = document.getElementById('friendResultList');
+  resultList.innerHTML = '';
+  if(!term) return;
+  try {
+    const q = query(collection(db,'publicProfiles'),
+      orderBy('displayNameLower'), startAt(term), endAt(term + ''), limit(10));
+    const snap = await getDocs(q);
+    if(snap.empty){
+      resultList.innerHTML = '<div class="empty-note">No players found.</div>';
+      return;
+    }
+    snap.forEach(d=>{
+      if(d.id === currentUser.uid) return;
+      renderFriendResultRow(resultList, d.id, d.data());
+    });
+  } catch(err){
+    console.error('Friend search failed', err);
+    resultList.innerHTML = '<div class="empty-note">Search failed — try again.</div>';
+  }
+}
+
+function renderFriendResultRow(container, uid, data){
+  const row = document.createElement('div');
+  row.className = 'friend-row';
+  const league = leagueForTrophies(data.trophies || 0);
+  const isFriend = (profile.friends||[]).includes(uid);
+  row.innerHTML = `
+    <div class="favatar">${friendGlyph(data)}</div>
+    <div class="finfo">
+      <div class="fname">${escapeHtml(data.displayName || 'Anonymous')}</div>
+      <div class="fmeta">${league.icon} ${league.name} · ${data.trophies||0} trophies</div>
+    </div>
+    ${isFriend ? '<span class="empty-note">Friends</span>' : '<button class="btn-small">Add</button>'}
+  `;
+  if(!isFriend){
+    row.querySelector('button').addEventListener('click', (e)=>{
+      sendFriendRequest(uid);
+      e.target.textContent = 'Sent';
+      e.target.disabled = true;
+    });
+  }
+  container.appendChild(row);
+}
+
+function sendFriendRequest(targetUid){
+  setDoc(doc(db, 'users', targetUid, 'inbox', currentUser.uid), {
+    type:'friend_request',
+    fromUid: currentUser.uid,
+    fromName: profile.displayName,
+    fromAvatarPreset: profile.avatarPreset || null,
+    fromPhotoURL: profile.photoURL || '',
+    fromTrophies: profile.trophies || 0,
+    createdAt: Date.now()
+  }).catch(err=>console.error('Send friend request failed', err));
+}
+
+function renderRequestList(requests){
+  const list = document.getElementById('requestList');
+  list.innerHTML = '';
+  if(requests.length === 0){
+    list.innerHTML = '<div class="empty-note">No pending requests.</div>';
+    return;
+  }
+  requests.forEach(r=>{
+    const row = document.createElement('div');
+    row.className = 'friend-row';
+    row.innerHTML = `
+      <div class="favatar">${friendGlyph({avatarPreset:r.fromAvatarPreset, photoURL:r.fromPhotoURL})}</div>
+      <div class="finfo">
+        <div class="fname">${escapeHtml(r.fromName || 'Anonymous')}</div>
+        <div class="fmeta">${r.fromTrophies||0} trophies</div>
+      </div>
+      <button class="btn-small accept">Accept</button>
+      <button class="btn-small decline">Decline</button>
+    `;
+    row.querySelector('.accept').addEventListener('click', ()=> acceptFriendRequest(r));
+    row.querySelector('.decline').addEventListener('click', ()=> declineFriendRequest(r));
+    list.appendChild(row);
+  });
+}
+
+function acceptFriendRequest(r){
+  if(!profile.friends.includes(r.fromUid)){
+    profile.friends.push(r.fromUid);
+    saveProfile();
+  }
+  setDoc(doc(db, 'users', r.fromUid, 'inbox', currentUser.uid), {
+    type:'friend_accept', byUid: currentUser.uid, createdAt: Date.now()
+  }).catch(err=>console.error('Accept notify failed', err));
+  deleteDoc(doc(db, 'users', currentUser.uid, 'inbox', r.id)).catch(()=>{});
+  renderFriendList();
+}
+
+function declineFriendRequest(r){
+  deleteDoc(doc(db, 'users', currentUser.uid, 'inbox', r.id)).catch(()=>{});
+}
+
+async function renderFriendList(){
+  const list = document.getElementById('friendList');
+  if(!list) return;
+  list.innerHTML = '';
+  const friends = profile.friends || [];
+  if(friends.length === 0){
+    list.innerHTML = '<div class="empty-note">No friends yet — search for players above.</div>';
+    return;
+  }
+  const rows = await Promise.all(friends.map(async uid=>{
+    try {
+      const snap = await getDoc(doc(db,'publicProfiles', uid));
+      return snap.exists() ? {uid, data: snap.data()} : null;
+    } catch(err){ return null; }
+  }));
+  const valid = rows.filter(Boolean).sort((a,b)=> (b.data.trophies||0) - (a.data.trophies||0));
+  if(valid.length === 0){
+    list.innerHTML = '<div class="empty-note">No friends yet — search for players above.</div>';
+    return;
+  }
+  valid.forEach(({data})=>{
+    const league = leagueForTrophies(data.trophies || 0);
+    const row = document.createElement('div');
+    row.className = 'friend-row';
+    row.innerHTML = `
+      <div class="favatar">${friendGlyph(data)}</div>
+      <div class="finfo">
+        <div class="fname">${escapeHtml(data.displayName || 'Anonymous')}</div>
+        <div class="fmeta">${league.icon} ${league.name} · ${data.trophies||0} trophies${(data.peakTrophies||0)>=2500 ? ' · 👑' : ''}</div>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+}
+
 onAuthStateChanged(auth, async (user)=>{
   currentUser = user;
   if(user){
     await loadProfile();
   } else {
     profile = null;
+    stopInboxListener();
+    stopMatchmakingListeners();
+    if(onlineState){
+      if(onlineState.timer) clearInterval(onlineState.timer);
+      if(onlineState.botTimeout) clearTimeout(onlineState.botTimeout);
+      if(onlineState.oppUnsub) onlineState.oppUnsub();
+      onlineState = null;
+    }
     renderProfile();
+    renderOnlineGate();
+    renderFriendsGate();
   }
 });
 </script>
