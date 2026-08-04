@@ -510,8 +510,9 @@
     <div class="panel" id="onlineFriendWait" style="display:none;">
       <div class="queue-status">
         <h2 class="section-title" style="justify-content:center;">Waiting for your friend</h2>
-        <p>Share this code with them:</p>
+        <p>Share this code, or send them a link that joins automatically:</p>
         <div class="lobby-code" id="lobbyCodeDisplay">------</div>
+        <button class="btn-secondary" id="copyLobbyLinkBtn" style="max-width:240px;margin:0 auto 10px;">Copy invite link</button>
         <button class="btn-secondary" id="cancelLobbyBtn" style="max-width:200px;margin:0 auto;">Cancel</button>
       </div>
     </div>
@@ -1790,6 +1791,38 @@ document.getElementById('joinCodeInput').addEventListener('keydown', e=>{
 });
 document.getElementById('cancelLobbyBtn').addEventListener('click', cancelFriendLobby);
 
+function lobbyInviteLink(code){
+  return `${window.location.origin}${window.location.pathname}?join=${code}`;
+}
+document.getElementById('copyLobbyLinkBtn').addEventListener('click', async ()=>{
+  if(!lobbyState) return;
+  const link = lobbyInviteLink(lobbyState.code);
+  const btn = document.getElementById('copyLobbyLinkBtn');
+  const original = btn.textContent;
+  try {
+    await navigator.clipboard.writeText(link);
+    btn.textContent = 'Copied!';
+  } catch(err){
+    console.error('Clipboard copy failed', err);
+    window.prompt('Copy this link:', link);
+    btn.textContent = original;
+    return;
+  }
+  setTimeout(()=>{ btn.textContent = original; }, 1500);
+});
+
+/* ================= ONLINE: JOIN VIA SHARED LINK (?join=CODE) ================= */
+let pendingJoinCode = null;
+(function checkPendingJoinFromUrl(){
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('join');
+  if(code){
+    pendingJoinCode = code.trim().toUpperCase();
+    history.replaceState(null, '', window.location.pathname);
+    document.querySelector('nav.tabs button[data-view="online"]').click();
+  }
+})();
+
 /* ================= ONLINE: LIVE MATCH ================= */
 const ONLINE_OPS = ['+','-','×','÷'];
 
@@ -2289,6 +2322,12 @@ onAuthStateChanged(auth, async (user)=>{
   currentUser = user;
   if(user){
     await loadProfile();
+    if(pendingJoinCode){
+      const code = pendingJoinCode;
+      pendingJoinCode = null;
+      document.querySelector('nav.tabs button[data-view="online"]').click();
+      joinFriendLobby(code);
+    }
   } else {
     profile = null;
     stopInboxListener();
