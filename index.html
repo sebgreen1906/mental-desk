@@ -1450,11 +1450,146 @@ function engagementSearchCenter(){
   return Math.max(0, center);
 }
 
-function difficultyBias(){
-  let bias = 0;
-  if((profile.onlineLossStreak||0) >= 2) bias += Math.min(12, profile.onlineLossStreak * 3);
-  if((profile.onlineWinStreak||0) >= 3) bias -= Math.min(12, profile.onlineWinStreak * 2);
-  return bias;
+function engagementDifficultyNudge(){
+  let nudge = 0;
+  if((profile.onlineLossStreak||0) >= 2) nudge -= Math.min(0.12, profile.onlineLossStreak * 0.03);
+  if((profile.onlineWinStreak||0) >= 3) nudge += Math.min(0.12, profile.onlineWinStreak * 0.02);
+  return nudge;
+}
+
+/* ================= ONLINE: ADAPTIVE DIFFICULTY (continuous, per-player) =================
+   Difficulty is a single 0..1 dial, not a fixed Easy/Hard/Expert tier. It's built from:
+   - a time-based baseline (easy start, plateau, then a ramp in the last ~25s)
+   - a rolling accuracy+speed performance score (last up to 20 answers, outlier-trimmed,
+     accuracy weighted above speed) that nudges the dial up or down per player
+   - a small bonus for live correct-answer streaks
+   - a small persistent nudge from lifetime win/loss streaks (same engagement mechanic as
+     matchmaking pairing already uses)
+   Only affects the human player's own question generation — the bot's simulated scoring
+   (BOT_LEAGUE_TARGET_RANGE / runBotSimulation) is untouched.
+*/
+function probRound(f){
+  const lower = Math.floor(f), upper = Math.ceil(f);
+  if(lower === upper) return lower;
+  return Math.random() < (f - lower) ? upper : lower;
+}
+function digitRange(digits){
+  return digits <= 1 ? [1,9] : [Math.pow(10, digits-1), Math.pow(10, digits) - 1];
+}
+function additionHasCarry(a,b){
+  let carry = 0, had = false, x=a, y=b;
+  while(x>0 || y>0){
+    const sum = (x%10) + (y%10) + carry;
+    carry = sum >= 10 ? 1 : 0;
+    if(carry) had = true;
+    x = Math.floor(x/10); y = Math.floor(y/10);
+  }
+  return had;
+}
+function subtractionHasBorrow(a,b){ // assumes a>=b
+  let borrow = 0, had = false, x=a, y=b;
+  while(x>0 || y>0){
+    const dx = x%10, dy = (y%10) + borrow;
+    if(dx < dy){ had = true; borrow = 1; } else borrow = 0;
+    x = Math.floor(x/10); y = Math.floor(y/10);
+  }
+  return had;
+}
+
+function genAddSubContinuous(d, op){
+  const digits = probRound(1 + d*1.0); // 1 digit at d=0 -> 2 digits at d=1
+  const [lo,hi] = digitRange(digits);
+  const wantCarry = Math.random() < (0.15 + d*0.65); // ~15% chance at d=0, ~80% at d=1
+  let a = randInt(lo,hi), b = randInt(lo,hi);
+  if(op === '-' && b > a){ const t=a; a=b; b=t; }
+  const hasFeature = () => op === '+' ? additionHasCarry(a,b) : subtractionHasBorrow(a,b);
+  let tries = 0;
+  while(tries < 12 && hasFeature() !== wantCarry){
+    a = randInt(lo,hi); b = randInt(lo,hi);
+    if(op === '-' && b > a){ const t=a; a=b; b=t; }
+    tries++;
+  }
+  return {a,b};
+}
+function genMultContinuous(d){
+  const aDigits = probRound(1 + Math.min(1,d) * 1.0);           // 1 -> 2
+  const bDigits = probRound(1 + Math.max(0, d - 0.3) * 1.43);   // stays 1-digit until d≈0.3, then -> 2
+  const [aLo,aHi] = digitRange(aDigits);
+  const [bLo,bHi] = digitRange(bDigits);
+  const a = randInt(aLo,aHi), b = randInt(bLo,bHi);
+  return Math.random() < 0.5 ? [a,b] : [b,a];
+}
+function genDivContinuous(d){
+  const divisorDigits = probRound(1 + Math.max(0, d - 0.3) * 1.43); // 1 -> 2
+  const quotientDigits = probRound(1 + d * 1.0);                    // 1 -> 2
+  const [dvLo,dvHi] = digitRange(divisorDigits);
+  const [qLo,qHi] = digitRange(quotientDigits);
+  const divisor = randInt(dvLo, dvHi);
+  const quotient = randInt(qLo, qHi);
+  return {divisor, quotient, dividend: divisor*quotient};
+}
+function genProblemAdaptive(opsList, d){
+  const op = opsList[randInt(0, opsList.length-1)];
+  let a,b,answer,text;
+  if(op === '+' || op === '-'){
+    ({a,b} = genAddSubContinuous(d, op));
+    answer = op === '+' ? a+b : a-b;
+    text = op === '+' ? `${a} + ${b}` : `${a} − ${b}`;
+  } else if(op === '×'){
+    [a,b] = genMultContinuous(d);
+    answer = a*b; text = `${a} × ${b}`;
+  } else {
+    const res = genDivContinuous(d);
+    answer = res.quotient; text = `${res.dividend} ÷ ${res.divisor}`;
+  }
+  return {text, answer};
+}
+
+function computePerfScore(history){
+  if(!history || history.length === 0) return 0;
+  const recent = history.slice(-20);
+  const accuracy = recent.filter(h=>h.correct).length / recent.length;
+  const accuracyScore = Math.max(-1, Math.min(1, (accuracy - 0.75) * 2));
+
+  // Speed only kicks in with enough samples, uses the median of a trimmed set (drops the
+  // slowest/fastest ~10%) so a single stalled or rushed answer can't swing the result —
+  // and so answering slowly on purpose has only a small, bounded effect (see weight below).
+  const correctTimes = recent.filter(h=>h.correct).map(h=>h.time).sort((x,y)=>x-y);
+  let speedScore = 0;
+  if(correctTimes.length >= 3){
+    const trim = Math.floor(correctTimes.length * 0.1);
+    const trimmed = correctTimes.slice(trim, correctTimes.length - trim || correctTimes.length);
+    const median = trimmed[Math.floor(trimmed.length/2)];
+    speedScore = Math.max(-1, Math.min(1, (3 - median) / 3));
+  }
+  return Math.max(-1, Math.min(1, accuracyScore*0.7 + speedScore*0.3)); // accuracy weighted above speed
+}
+
+function computeTargetDifficulty(){
+  const elapsed = (Date.now() - onlineState.startedAt)/1000;
+  const qIndex = onlineState.questionIndex || 1;
+
+  if(qIndex <= 3){
+    // First 3 questions are always easy — not just a lower baseline, since with only 1-2
+    // answers logged so far a single lucky/fast one could otherwise swing the adaptive
+    // term up immediately and undercut the "easy start" guarantee.
+    return 0.05;
+  }
+
+  const remaining = MATCH_DURATION - elapsed;
+  let timeBase;
+  if(remaining > 25){
+    timeBase = 0.28; // plateau: not too easy, not too hard
+  } else {
+    const rampProgress = Math.min(1, (25 - remaining) / 25); // 0 at 25s left -> 1 at time-up
+    timeBase = 0.28 + rampProgress * 0.62;
+  }
+
+  const perf = computePerfScore(onlineState.answerHistory);
+  const adaptiveAdjust = perf * 0.35;
+  const streakBonus = Math.min(0.15, (onlineState.myStreak||0) * 0.02); // streaks slightly accelerate difficulty
+  const target = timeBase + adaptiveAdjust + streakBonus + (onlineState.engagementNudge||0);
+  return Math.max(0.03, Math.min(1, target));
 }
 
 document.getElementById('findMatchBtn').addEventListener('click', startMatchmaking);
@@ -1674,7 +1809,7 @@ async function enterMatch(matchId){
     myScore:0, myWrong:0, myStreak:0, myBestStreak:0, myMatchScore:0,
     oppMatchScore:0, current:null, questionStart:0, timer:null,
     oppName: (matchData.playerNames && matchData.playerNames[oppUid]) || 'Opponent',
-    bias: difficultyBias()
+    engagementNudge: engagementDifficultyNudge(), answerHistory: [], questionIndex: 0
   };
 
   document.getElementById('matchOppName').textContent = onlineState.oppName;
@@ -1727,7 +1862,7 @@ function startBotMatch(){
     myScore:0, myWrong:0, myStreak:0, myBestStreak:0, myMatchScore:0,
     oppMatchScore:0, current:null, questionStart:0, timer:null,
     oppName: generateBotUsername(),
-    bias: difficultyBias()
+    engagementNudge: engagementDifficultyNudge(), answerHistory: [], questionIndex: 0
   };
   onlineState.oppTrophiesAtStart = onlineState.botTrophies;
 
@@ -1762,11 +1897,6 @@ function runBotSimulation(){
   }, 1000 + randInt(-150,150));
 }
 
-function tierForElapsed(sec, bias){
-  const t1 = 15 + bias, t2 = 35 + bias;
-  return sec < t1 ? 'easy' : sec < t2 ? 'hard' : 'expert';
-}
-
 function startMatchLoop(){
   showOnlinePanel('match');
   document.getElementById('matchMyScore').textContent = '0';
@@ -1785,9 +1915,9 @@ function startMatchLoop(){
 }
 
 function nextMatchProblem(){
-  const elapsed = (Date.now() - onlineState.startedAt)/1000;
-  const tier = tierForElapsed(elapsed, onlineState.bias);
-  onlineState.current = genProblem(ONLINE_OPS, tier);
+  onlineState.questionIndex = (onlineState.questionIndex || 0) + 1;
+  const difficulty = computeTargetDifficulty();
+  onlineState.current = genProblemAdaptive(ONLINE_OPS, difficulty);
   document.getElementById('matchProblemText').textContent = onlineState.current.text;
   const input = document.getElementById('matchAnswerInput');
   input.value = '';
@@ -1801,6 +1931,11 @@ function submitMatchAnswer(){
   const input = document.getElementById('matchAnswerInput');
   if(input.value.trim() === '') return;
   const val = parseInt(input.value.trim(), 10);
+  const responseTime = (performance.now() - onlineState.questionStart) / 1000;
+  onlineState.answerHistory = onlineState.answerHistory || [];
+  onlineState.answerHistory.push({correct: val === onlineState.current.answer, time: responseTime});
+  if(onlineState.answerHistory.length > 20) onlineState.answerHistory.shift();
+
   if(val === onlineState.current.answer){
     onlineState.myScore++;
     onlineState.myStreak++;
