@@ -262,6 +262,29 @@
   .queue-status p{color:var(--text-dim);font-size:13px;}
   .lobby-code{font-family:var(--font-display);font-size:36px;font-weight:700;letter-spacing:.15em;color:var(--amber);margin:14px 0;}
 
+  /* ---------- BATTLE LOG ---------- */
+  .battle-entry{
+    background:var(--panel-alt);border:1px solid var(--border);border-radius:10px;
+    padding:14px 16px;margin-bottom:10px;
+  }
+  .battle-entry:last-child{margin-bottom:0;}
+  .battle-top{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .battle-outcome{font-family:var(--font-display);font-weight:700;font-size:15px;}
+  .battle-outcome.win{color:var(--green);}
+  .battle-outcome.loss{color:var(--red);}
+  .battle-trophy{font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--text-dim);white-space:nowrap;}
+  .battle-trophy.up{color:var(--green);}
+  .battle-trophy.down{color:var(--red);}
+  .battle-score{font-family:var(--font-display);font-size:22px;font-weight:700;margin-top:6px;}
+  .battle-vs{font-size:13px;color:var(--text);margin-top:6px;}
+  .battle-meta{font-size:12px;color:var(--text-faint);margin-top:2px;}
+  .battle-time{font-size:11px;color:var(--text-faint);margin-top:6px;}
+  .battle-details-btn{
+    margin-top:10px;background:transparent;border:none;color:var(--amber);
+    font-family:var(--font-display);font-weight:600;font-size:12px;cursor:pointer;padding:0;
+  }
+  .battle-details-btn:hover{text-decoration:underline;}
+
   #lobbyLeagueBadge, #profileLeagueBadge{display:inline-block;cursor:pointer;}
 
   /* ---------- LEAGUE LEVELS MODAL ---------- */
@@ -486,6 +509,11 @@
       </div>
 
       <div class="panel">
+        <h2 class="section-title">Battle Log</h2>
+        <div id="battleLogList"></div>
+      </div>
+
+      <div class="panel">
         <h2 class="section-title">Play a friend</h2>
         <p style="font-size:13px;color:var(--text-dim);margin:0 0 14px;">Unranked — trophies aren't won or lost, just a private 1v1 for fun.</p>
         <button class="btn-secondary" id="createLobbyBtn" style="width:100%;">Create private match</button>
@@ -695,6 +723,16 @@
     <div class="modal-title">League levels</div>
     <div class="modal-sub">Win ranked matches to climb the ladder. Reach 2,500 trophies and you'll earn the permanent Hyperleague Elite badge — kept on your profile even if you're later demoted.</div>
     <div class="league-ladder" id="leagueLadder"></div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="matchDetailsModal">
+  <div class="modal-box">
+    <button class="modal-close" id="matchDetailsClose" aria-label="Close">✕</button>
+    <div class="modal-title" id="matchDetailsTitle">Match Details</div>
+    <div class="modal-sub" id="matchDetailsSub"></div>
+    <div class="summary-grid" id="matchDetailsStats"></div>
+    <div id="matchDetailsAddFriendWrap" style="margin-top:16px;"></div>
   </div>
 </div>
 
@@ -1101,8 +1139,15 @@ document.getElementById('leagueModalClose').addEventListener('click', closeLeagu
 document.getElementById('leagueModal').addEventListener('click', e=>{
   if(e.target.id === 'leagueModal') closeLeagueModal();
 });
+document.getElementById('matchDetailsClose').addEventListener('click', closeMatchDetailsModal);
+document.getElementById('matchDetailsModal').addEventListener('click', e=>{
+  if(e.target.id === 'matchDetailsModal') closeMatchDetailsModal();
+});
+function closeMatchDetailsModal(){
+  document.getElementById('matchDetailsModal').classList.add('hidden');
+}
 document.addEventListener('keydown', e=>{
-  if(e.key === 'Escape') closeLeagueModal();
+  if(e.key === 'Escape'){ closeLeagueModal(); closeMatchDetailsModal(); }
 });
 
 let currentUser = null;
@@ -1434,6 +1479,7 @@ function showOnlinePanel(name){
 function renderLobby(){
   if(!profile) return;
   renderLeagueCard('lobbyLeagueBadge','lobbyTrophies','lobbyProgressWrap','lobbyProgressFill','lobbyRange','hyperEliteWrap');
+  renderBattleLog();
 }
 
 document.getElementById('onlineSigninBtn').addEventListener('click', doSignIn);
@@ -1591,6 +1637,158 @@ function computeTargetDifficulty(){
   const streakBonus = Math.min(0.15, (onlineState.myStreak||0) * 0.02); // streaks slightly accelerate difficulty
   const target = timeBase + adaptiveAdjust + streakBonus + (onlineState.engagementNudge||0);
   return Math.max(0.03, Math.min(1, target));
+}
+
+/* ================= ONLINE: BATTLE LOG ================= */
+function formatRelativeTime(ts){
+  const sec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if(sec < 60) return 'Just now';
+  const min = Math.floor(sec / 60);
+  if(min < 60) return `${min} minute${min===1?'':'s'} ago`;
+  const hr = Math.floor(min / 60);
+  if(hr < 24) return `${hr} hour${hr===1?'':'s'} ago`;
+  const day = Math.floor(hr / 24);
+  if(day < 30) return `${day} day${day===1?'':'s'} ago`;
+  const mo = Math.floor(day / 30);
+  return `${mo} month${mo===1?'':'s'} ago`;
+}
+
+async function computeExpectedScore(avgDifficultyThisMatch){
+  try {
+    const q = query(collection(db, 'users', currentUser.uid, 'matchHistory'), orderBy('timestamp','desc'), limit(5));
+    const snap = await getDocs(q);
+    if(snap.empty) return null;
+    let totalScore = 0, totalDiff = 0, n = 0;
+    snap.forEach(d=>{
+      const m = d.data();
+      totalScore += m.displayScore || 0;
+      totalDiff += m.avgDifficulty || 0.3;
+      n++;
+    });
+    const avgScore = totalScore / n;
+    const avgDiff = totalDiff / n || 0.3;
+    const ratio = Math.max(0.5, Math.min(1.5, avgDiff / Math.max(0.05, avgDifficultyThisMatch)));
+    return Math.round(avgScore * ratio);
+  } catch(err){
+    console.error('Expected score calc failed', err);
+    return null;
+  }
+}
+
+async function logMatchToHistory({result, displayScore, oppDisplayScore, trophyDelta, forfeited}){
+  if(!currentUser || !onlineState) return;
+  const totalAnswered = (onlineState.myScore||0) + (onlineState.myWrong||0);
+  const accuracy = totalAnswered ? Math.round((onlineState.myScore/totalAnswered)*100) : 0;
+  const times = (onlineState.answerHistory||[]).map(h=>h.time);
+  const avgAnswerTime = times.length ? Number((times.reduce((a,b)=>a+b,0)/times.length).toFixed(1)) : 0;
+  const diffs = onlineState.difficultyHistory || [];
+  const avgDifficulty = diffs.length ? diffs.reduce((a,b)=>a+b,0)/diffs.length : 0.3;
+
+  const expectedScore = await computeExpectedScore(avgDifficulty);
+
+  const entry = {
+    opponentUid: onlineState.isBot ? null : onlineState.oppUid,
+    opponentName: onlineState.oppName,
+    opponentIsBot: !!onlineState.isBot,
+    opponentTrophies: onlineState.oppTrophiesAtStart || 0,
+    opponentLeagueId: leagueForTrophies(onlineState.oppTrophiesAtStart || 0).id,
+    mode: onlineState.mode,
+    result, forfeited: !!forfeited,
+    displayScore, oppDisplayScore, trophyDelta,
+    accuracy, avgAnswerTime,
+    longestStreak: onlineState.myBestStreak || 0,
+    totalAnswered, correctAnswers: onlineState.myScore || 0, incorrectAnswers: onlineState.myWrong || 0,
+    skipped: onlineState.skipCount || 0,
+    avgDifficulty: Number(avgDifficulty.toFixed(2)),
+    expectedScore,
+    timestamp: Date.now()
+  };
+
+  const ref = doc(collection(db, 'users', currentUser.uid, 'matchHistory'));
+  setDoc(ref, entry).catch(err=>console.error('Failed to log match history', err));
+}
+
+async function renderBattleLog(){
+  const list = document.getElementById('battleLogList');
+  if(!list || !currentUser) return;
+  list.innerHTML = '<div class="empty-note">Loading…</div>';
+  try {
+    const q = query(collection(db, 'users', currentUser.uid, 'matchHistory'), orderBy('timestamp','desc'), limit(20));
+    const snap = await getDocs(q);
+    if(snap.empty){
+      list.innerHTML = '<div class="empty-note">No matches played yet — find a match to get started.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    snap.forEach(d=> renderBattleEntry(list, d.data()));
+  } catch(err){
+    console.error('Failed to load battle log', err);
+    list.innerHTML = '<div class="empty-note">Couldn\'t load battle log.</div>';
+  }
+}
+
+function renderBattleEntry(container, m){
+  const league = LEAGUES.find(l=>l.id===m.opponentLeagueId) || LEAGUES[0];
+  const isWin = m.result === 'win';
+  const row = document.createElement('div');
+  row.className = 'battle-entry';
+  const trophyHtml = m.mode === 'friendly'
+    ? '<span class="battle-trophy">Friendly</span>'
+    : `<span class="battle-trophy ${m.trophyDelta>=0?'up':'down'}">${m.trophyDelta>=0?'+':''}${m.trophyDelta} 🏆</span>`;
+  row.innerHTML = `
+    <div class="battle-top">
+      <span class="battle-outcome ${isWin?'win':'loss'}">${isWin?'Victory':'Defeat'}${m.forfeited?' (forfeit)':''}</span>
+      ${trophyHtml}
+    </div>
+    <div class="battle-score">${m.displayScore} – ${m.oppDisplayScore}</div>
+    <div class="battle-vs">vs ${escapeHtml(m.opponentName)}${m.opponentIsBot ? ' 🤖' : ''}</div>
+    <div class="battle-meta">${league.icon} ${league.name} League · ${m.opponentTrophies||0} trophies</div>
+    <div class="battle-time">${formatRelativeTime(m.timestamp)}</div>
+    <button class="battle-details-btn">▶ View Details</button>
+  `;
+  row.querySelector('.battle-details-btn').addEventListener('click', ()=> openMatchDetails(m));
+  container.appendChild(row);
+}
+
+function openMatchDetails(m){
+  document.getElementById('matchDetailsTitle').textContent = m.result === 'win' ? 'Victory' : 'Defeat';
+  document.getElementById('matchDetailsSub').textContent =
+    `vs ${m.opponentName}${m.opponentIsBot ? ' (bot)' : ''} · ${formatRelativeTime(m.timestamp)}`;
+
+  const stats = [
+    ['Accuracy', m.accuracy + '%'],
+    ['Avg answer time', m.avgAnswerTime + 's'],
+    ['Longest streak', m.longestStreak],
+    ['Total answered', m.totalAnswered],
+    ['Correct answers', m.correctAnswers],
+    ['Incorrect answers', m.incorrectAnswers],
+    ['Skipped', m.skipped || 0],
+  ];
+  if(m.expectedScore != null) stats.push(['Expected score', m.expectedScore]);
+
+  document.getElementById('matchDetailsStats').innerHTML = stats.map(([label,val])=>
+    `<div class="summary-stat"><div class="num">${val}</div><div class="lab">${label}</div></div>`
+  ).join('');
+
+  const friendWrap = document.getElementById('matchDetailsAddFriendWrap');
+  friendWrap.innerHTML = '';
+  if(!m.opponentIsBot && m.opponentUid && m.opponentUid !== currentUser.uid){
+    if((profile.friends||[]).includes(m.opponentUid)){
+      friendWrap.innerHTML = '<div class="empty-note">Already friends</div>';
+    } else {
+      const btn = document.createElement('button');
+      btn.className = 'btn-small';
+      btn.textContent = 'Add as friend';
+      btn.addEventListener('click', ()=>{
+        sendFriendRequest(m.opponentUid);
+        btn.textContent = 'Sent';
+        btn.disabled = true;
+      });
+      friendWrap.appendChild(btn);
+    }
+  }
+
+  document.getElementById('matchDetailsModal').classList.remove('hidden');
 }
 
 document.getElementById('findMatchBtn').addEventListener('click', startMatchmaking);
@@ -1844,7 +2042,8 @@ async function enterMatch(matchId){
     myScore:0, myWrong:0, myStreak:0, myBestStreak:0, myMatchScore:0,
     oppMatchScore:0, current:null, questionStart:0, timer:null,
     oppName: (matchData.playerNames && matchData.playerNames[oppUid]) || 'Opponent',
-    engagementNudge: engagementDifficultyNudge(), answerHistory: [], questionIndex: 0
+    engagementNudge: engagementDifficultyNudge(), answerHistory: [], questionIndex: 0,
+    skipCount: 0, difficultyHistory: []
   };
 
   document.getElementById('matchOppName').textContent = onlineState.oppName;
@@ -1897,7 +2096,8 @@ function startBotMatch(){
     myScore:0, myWrong:0, myStreak:0, myBestStreak:0, myMatchScore:0,
     oppMatchScore:0, current:null, questionStart:0, timer:null,
     oppName: generateBotUsername(),
-    engagementNudge: engagementDifficultyNudge(), answerHistory: [], questionIndex: 0
+    engagementNudge: engagementDifficultyNudge(), answerHistory: [], questionIndex: 0,
+    skipCount: 0, difficultyHistory: []
   };
   onlineState.oppTrophiesAtStart = onlineState.botTrophies;
 
@@ -1952,6 +2152,8 @@ function startMatchLoop(){
 function nextMatchProblem(){
   onlineState.questionIndex = (onlineState.questionIndex || 0) + 1;
   const difficulty = computeTargetDifficulty();
+  onlineState.difficultyHistory = onlineState.difficultyHistory || [];
+  onlineState.difficultyHistory.push(difficulty);
   onlineState.current = genProblemAdaptive(ONLINE_OPS, difficulty);
   document.getElementById('matchProblemText').textContent = onlineState.current.text;
   const input = document.getElementById('matchAnswerInput');
@@ -1998,6 +2200,7 @@ function submitMatchAnswer(){
 function skipMatchProblem(){
   if(!onlineState || onlineState.current == null) return;
   if(onlineState.advanceTimer) clearTimeout(onlineState.advanceTimer);
+  onlineState.skipCount = (onlineState.skipCount || 0) + 1;
   const elapsed = (Date.now() - onlineState.startedAt)/1000;
   if(elapsed < MATCH_DURATION) nextMatchProblem();
 }
@@ -2019,10 +2222,12 @@ function forfeitMatch(){
   const isBot = onlineState.isBot;
   const isFriendly = onlineState.mode === 'friendly';
   const matchId = onlineState.matchId;
+  let actualDelta = 0;
 
   if(!isFriendly){
     const trophiesBefore = profile.trophies || 0;
     profile.trophies = Math.max(0, trophiesBefore - 30);
+    actualDelta = trophiesBefore - profile.trophies;
     profile.onlineLosses = (profile.onlineLosses||0) + 1;
     profile.onlineLossStreak = (profile.onlineLossStreak||0) + 1;
     profile.onlineWinStreak = 0;
@@ -2030,6 +2235,12 @@ function forfeitMatch(){
     applyProfileToTicker();
     saveProfile();
   }
+
+  logMatchToHistory({
+    result: 'loss', forfeited: true,
+    displayScore: Math.round(onlineState.myMatchScore), oppDisplayScore: Math.round(onlineState.oppMatchScore),
+    trophyDelta: isFriendly ? 0 : -actualDelta
+  });
 
   if(!isBot && matchId){
     updateDoc(doc(db,'matches', matchId), { status:'forfeited' }).catch(()=>{});
@@ -2120,6 +2331,12 @@ function endMatch(){
       transEl.textContent = '';
     }
   }
+
+  logMatchToHistory({
+    result: iWon ? 'win' : 'loss',
+    displayScore: Math.round(myMatchScore), oppDisplayScore: Math.round(oppMatchScore),
+    trophyDelta: isFriendly ? 0 : (iWon ? actualDelta : -actualDelta)
+  });
 
   onlineState = null;
 }
