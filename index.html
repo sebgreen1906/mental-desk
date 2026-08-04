@@ -276,7 +276,11 @@
   .battle-trophy.up{color:var(--green);}
   .battle-trophy.down{color:var(--red);}
   .battle-score{font-family:var(--font-display);font-size:22px;font-weight:700;margin-top:6px;}
-  .battle-vs{font-size:13px;color:var(--text);margin-top:6px;}
+  .battle-mode-tag{
+    display:inline-block;margin-top:8px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--text-faint);border:1px solid var(--border);padding:3px 9px;border-radius:12px;
+  }
+  .battle-vs{font-size:13px;color:var(--text);margin-top:8px;}
   .battle-meta{font-size:12px;color:var(--text-faint);margin-top:2px;}
   .battle-time{font-size:11px;color:var(--text-faint);margin-top:6px;}
   .battle-details-btn{
@@ -1653,9 +1657,9 @@ function formatRelativeTime(ts){
   return `${mo} month${mo===1?'':'s'} ago`;
 }
 
-async function computeExpectedScore(avgDifficultyThisMatch){
+async function computeExpectedScore(uid, avgDifficultyThisMatch){
   try {
-    const q = query(collection(db, 'users', currentUser.uid, 'matchHistory'), orderBy('timestamp','desc'), limit(5));
+    const q = query(collection(db, 'users', uid, 'matchHistory'), orderBy('timestamp','desc'), limit(5));
     const snap = await getDocs(q);
     if(snap.empty) return null;
     let totalScore = 0, totalDiff = 0, n = 0;
@@ -1677,6 +1681,8 @@ async function computeExpectedScore(avgDifficultyThisMatch){
 
 async function logMatchToHistory({result, displayScore, oppDisplayScore, trophyDelta, forfeited}){
   if(!currentUser || !onlineState) return;
+  const uid = currentUser.uid; // captured now — onlineState/currentUser may change while we await below
+
   const totalAnswered = (onlineState.myScore||0) + (onlineState.myWrong||0);
   const accuracy = totalAnswered ? Math.round((onlineState.myScore/totalAnswered)*100) : 0;
   const times = (onlineState.answerHistory||[]).map(h=>h.time);
@@ -1684,8 +1690,8 @@ async function logMatchToHistory({result, displayScore, oppDisplayScore, trophyD
   const diffs = onlineState.difficultyHistory || [];
   const avgDifficulty = diffs.length ? diffs.reduce((a,b)=>a+b,0)/diffs.length : 0.3;
 
-  const expectedScore = await computeExpectedScore(avgDifficulty);
-
+  // Build the full entry BEFORE the await below — endMatch()/forfeitMatch() null out onlineState
+  // right after calling this (fire-and-forget), so nothing here can read onlineState post-await.
   const entry = {
     opponentUid: onlineState.isBot ? null : onlineState.oppUid,
     opponentName: onlineState.oppName,
@@ -1700,11 +1706,12 @@ async function logMatchToHistory({result, displayScore, oppDisplayScore, trophyD
     totalAnswered, correctAnswers: onlineState.myScore || 0, incorrectAnswers: onlineState.myWrong || 0,
     skipped: onlineState.skipCount || 0,
     avgDifficulty: Number(avgDifficulty.toFixed(2)),
-    expectedScore,
     timestamp: Date.now()
   };
 
-  const ref = doc(collection(db, 'users', currentUser.uid, 'matchHistory'));
+  entry.expectedScore = await computeExpectedScore(uid, avgDifficulty);
+
+  const ref = doc(collection(db, 'users', uid, 'matchHistory'));
   setDoc(ref, entry).catch(err=>console.error('Failed to log match history', err));
 }
 
@@ -1735,12 +1742,14 @@ function renderBattleEntry(container, m){
   const trophyHtml = m.mode === 'friendly'
     ? '<span class="battle-trophy">Friendly</span>'
     : `<span class="battle-trophy ${m.trophyDelta>=0?'up':'down'}">${m.trophyDelta>=0?'+':''}${m.trophyDelta} 🏆</span>`;
+  const modeTag = m.mode === 'friendly' ? '🤝 Friendly Match' : '🏆 Ranked Match';
   row.innerHTML = `
     <div class="battle-top">
       <span class="battle-outcome ${isWin?'win':'loss'}">${isWin?'Victory':'Defeat'}${m.forfeited?' (forfeit)':''}</span>
       ${trophyHtml}
     </div>
     <div class="battle-score">${m.displayScore} – ${m.oppDisplayScore}</div>
+    <div class="battle-mode-tag">${modeTag}</div>
     <div class="battle-vs">vs ${escapeHtml(m.opponentName)}${m.opponentIsBot ? ' 🤖' : ''}</div>
     <div class="battle-meta">${league.icon} ${league.name} League · ${m.opponentTrophies||0} trophies</div>
     <div class="battle-time">${formatRelativeTime(m.timestamp)}</div>
@@ -1752,8 +1761,9 @@ function renderBattleEntry(container, m){
 
 function openMatchDetails(m){
   document.getElementById('matchDetailsTitle').textContent = m.result === 'win' ? 'Victory' : 'Defeat';
+  const modeLabel = m.mode === 'friendly' ? 'Friendly Match' : 'Ranked Match';
   document.getElementById('matchDetailsSub').textContent =
-    `vs ${m.opponentName}${m.opponentIsBot ? ' (bot)' : ''} · ${formatRelativeTime(m.timestamp)}`;
+    `vs ${m.opponentName}${m.opponentIsBot ? ' (bot)' : ''} · ${modeLabel} · ${formatRelativeTime(m.timestamp)}`;
 
   const stats = [
     ['Accuracy', m.accuracy + '%'],
