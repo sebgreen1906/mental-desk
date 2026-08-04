@@ -1797,14 +1797,16 @@ function lobbyInviteLink(code){
 document.getElementById('copyLobbyLinkBtn').addEventListener('click', async ()=>{
   if(!lobbyState) return;
   const link = lobbyInviteLink(lobbyState.code);
+  const name = (profile && profile.displayName) || 'Someone';
+  const message = `${name} has challenged you to a Desk Duel! ${link}`;
   const btn = document.getElementById('copyLobbyLinkBtn');
   const original = btn.textContent;
   try {
-    await navigator.clipboard.writeText(link);
+    await navigator.clipboard.writeText(message);
     btn.textContent = 'Copied!';
   } catch(err){
     console.error('Clipboard copy failed', err);
-    window.prompt('Copy this link:', link);
+    window.prompt('Copy this message:', message);
     btn.textContent = original;
     return;
   }
