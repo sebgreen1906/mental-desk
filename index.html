@@ -670,7 +670,17 @@
             </div>
           </div>
           <div class="save-hint">Optional — used only to personalize your experience. Saved automatically.</div>
+          <label style="display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13px;color:var(--text-dim);cursor:pointer;">
+            <input type="checkbox" id="emailOptInInput" />
+            Get occasional emails from Mental Desk
+          </label>
         </details>
+      </div>
+
+      <div class="panel" id="adminPanel" style="display:none;">
+        <h2 class="section-title">Admin</h2>
+        <p style="font-size:13px;color:var(--text-dim);margin:0 0 14px;">Export the list of users who've opted in to receive emails.</p>
+        <button class="btn-secondary" id="exportMailingListBtn">Export mailing list (.csv)</button>
       </div>
     </div>
   </section>
@@ -1008,6 +1018,7 @@ function defaultProfile(user){
     banners: [],
     age: null,
     gender: null,
+    emailOptIn: false,
     trophies: 0,
     peakTrophies: 0,
     onlineWinStreak: 0,
@@ -1112,6 +1123,7 @@ async function loadProfile(){
     profile.onlineWins = profile.onlineWins || 0;
     profile.onlineLosses = profile.onlineLosses || 0;
     profile.friends = profile.friends || [];
+    profile.emailOptIn = profile.emailOptIn || false;
   } else {
     profile = defaultProfile(currentUser);
     await setDoc(ref, profile);
@@ -1221,6 +1233,9 @@ function renderProfile(){
 
   document.getElementById('ageInput').value = profile.age || '';
   document.getElementById('genderInput').value = profile.gender || '';
+  document.getElementById('emailOptInInput').checked = !!profile.emailOptIn;
+
+  document.getElementById('adminPanel').style.display = isOwner(currentUser) ? 'block' : 'none';
 
   renderLeagueCard('profileLeagueBadge', 'profileTrophies', 'profileProgressWrap', 'profileProgressFill', 'profileRange', 'profileHyperEliteWrap');
 
@@ -1339,6 +1354,59 @@ document.getElementById('genderInput').addEventListener('change', e=>{
   profile.gender = e.target.value || null;
   saveProfile();
 });
+document.getElementById('emailOptInInput').addEventListener('change', e=>{
+  if(!profile) return;
+  profile.emailOptIn = e.target.checked;
+  saveProfile();
+});
+
+/* ================= OWNER: MAILING LIST EXPORT ================= */
+function csvEscape(val){
+  const s = String(val ?? '');
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+}
+
+async function exportMailingListCsv(){
+  if(!isOwner(currentUser)) return;
+  let snap;
+  try {
+    snap = await getDocs(collection(db, 'users'));
+  } catch(err){
+    console.error('Mailing list export failed', err);
+    alert('Export failed — check console for details (you may need to update Firestore rules to grant the owner read access to the users collection).');
+    return;
+  }
+
+  const header = ['Email','Age','Gender','IQ Score','Trophies','League','Total Sessions','Online Wins','Online Losses','Best Streak Ever'];
+  const rows = [header];
+  snap.forEach(d=>{
+    const u = d.data();
+    if(!u.emailOptIn) return;
+    const league = leagueForTrophies(u.trophies || 0);
+    rows.push([
+      u.email || '', u.age ?? '', u.gender || '', u.iqScore ?? '',
+      u.trophies ?? 0, league.name, u.totalSessions ?? 0,
+      u.onlineWins ?? 0, u.onlineLosses ?? 0, u.bestStreakEver ?? 0
+    ]);
+  });
+
+  if(rows.length === 1){
+    alert('No users have opted in to emails yet.');
+    return;
+  }
+
+  const csv = rows.map(r => r.map(csvEscape).join(',')).join('\r\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `mental-desk-mailing-list-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+document.getElementById('exportMailingListBtn').addEventListener('click', exportMailingListCsv);
 
 /* ================= ONLINE: GATE / PANELS ================= */
 function renderOnlineGate(){
