@@ -2093,14 +2093,20 @@ function renderRequestList(requests){
   });
 }
 
-function acceptFriendRequest(r){
+async function acceptFriendRequest(r){
   if(!profile.friends.includes(r.fromUid)){
     profile.friends.push(r.fromUid);
     saveProfile();
   }
-  setDoc(doc(db, 'users', r.fromUid, 'inbox', currentUser.uid), {
-    type:'friend_accept', byUid: currentUser.uid, createdAt: Date.now()
-  }).catch(err=>console.error('Accept notify failed', err));
+  try {
+    // Written before the original request is deleted below — the security rules
+    // require that request to still exist as proof this accept is a real reciprocal action.
+    await setDoc(doc(db, 'users', r.fromUid, 'inbox', currentUser.uid), {
+      type:'friend_accept', byUid: currentUser.uid, createdAt: Date.now()
+    });
+  } catch(err){
+    console.error('Accept notify failed', err);
+  }
   deleteDoc(doc(db, 'users', currentUser.uid, 'inbox', r.id)).catch(()=>{});
   renderFriendList();
 }
