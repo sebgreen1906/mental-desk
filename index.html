@@ -323,6 +323,13 @@
     background:linear-gradient(135deg,#FFD700,#FFF3C4,#FFD700);color:#5A4300;font-family:var(--font-display);font-weight:700;font-size:13px;
     box-shadow:0 0 16px rgba(255,215,0,.55);}
 
+  .owner-badge{
+    display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;
+    background:linear-gradient(135deg,#7C5CFF,#5B8CFF);color:#fff;font-family:var(--font-display);
+    font-weight:700;font-size:11px;letter-spacing:.05em;text-transform:uppercase;margin-left:8px;
+    vertical-align:middle;white-space:nowrap;
+  }
+
   /* ---------- FRIENDS ---------- */
   .friend-search-row{display:flex;gap:10px;}
   .friend-search-row input{
@@ -1013,6 +1020,14 @@ function defaultProfile(user){
   };
 }
 
+/* ================= OWNER TAG =================
+   TODO: set this to the exact Google account email you sign into Mental Desk with.
+*/
+const OWNER_EMAIL = 'sebgreen1906@gmail.com';
+function isOwner(user){
+  return !!user && !!user.email && user.email === OWNER_EMAIL;
+}
+
 /* ================= LEAGUES / TROPHIES ================= */
 const LEAGUES = [
   { id:'iron',    name:'Iron',        min:0,    max:499,  icon:'🔩', color:'#8B94A3' },
@@ -1125,6 +1140,7 @@ function syncPublicProfile(){
     photoURL: profile.photoURL || '',
     trophies: profile.trophies || 0,
     peakTrophies: profile.peakTrophies || 0,
+    isOwner: isOwner(currentUser),
     updatedAt: Date.now()
   };
   setDoc(doc(db, 'publicProfiles', currentUser.uid), pub, {merge:true})
@@ -1167,7 +1183,8 @@ function renderAuthHeader(){
     signinBtn.style.display = 'none';
     userChip.style.display = 'flex';
     signoutBtn.style.display = 'inline-block';
-    document.getElementById('userChipName').textContent = (profile && profile.displayName) || currentUser.displayName || 'You';
+    document.getElementById('userChipName').textContent =
+      ((profile && profile.displayName) || currentUser.displayName || 'You') + (isOwner(currentUser) ? ' 🛡️' : '');
     renderAvatarInto(document.getElementById('userChipAvatar'));
   } else {
     signinBtn.style.display = 'flex';
@@ -1188,7 +1205,8 @@ function renderProfile(){
   signedOutPanel.style.display = 'none';
   signedInPanel.style.display = 'block';
 
-  document.getElementById('profileName').textContent = profile.displayName;
+  document.getElementById('profileName').innerHTML =
+    escapeHtml(profile.displayName) + (isOwner(currentUser) ? ' <span class="owner-badge">🛡️ Owner</span>' : '');
   document.getElementById('profileEmail').textContent = profile.email;
   document.getElementById('profileIq').textContent = profile.iqScore;
   renderAvatarInto(document.getElementById('profileAvatar'));
@@ -1954,7 +1972,7 @@ function renderFriendResultRow(container, uid, data){
   row.innerHTML = `
     <div class="favatar">${friendGlyph(data)}</div>
     <div class="finfo">
-      <div class="fname">${escapeHtml(data.displayName || 'Anonymous')}</div>
+      <div class="fname">${escapeHtml(data.displayName || 'Anonymous')}${data.isOwner ? ' <span class="owner-badge">🛡️ Owner</span>' : ''}</div>
       <div class="fmeta">${league.icon} ${league.name} · ${data.trophies||0} trophies</div>
     </div>
     ${isFriend ? '<span class="empty-note">Friends</span>' : '<button class="btn-small">Add</button>'}
@@ -1977,6 +1995,7 @@ function sendFriendRequest(targetUid){
     fromAvatarPreset: profile.avatarPreset || null,
     fromPhotoURL: profile.photoURL || '',
     fromTrophies: profile.trophies || 0,
+    fromIsOwner: isOwner(currentUser),
     createdAt: Date.now()
   }).catch(err=>console.error('Send friend request failed', err));
 }
@@ -1994,7 +2013,7 @@ function renderRequestList(requests){
     row.innerHTML = `
       <div class="favatar">${friendGlyph({avatarPreset:r.fromAvatarPreset, photoURL:r.fromPhotoURL})}</div>
       <div class="finfo">
-        <div class="fname">${escapeHtml(r.fromName || 'Anonymous')}</div>
+        <div class="fname">${escapeHtml(r.fromName || 'Anonymous')}${r.fromIsOwner ? ' <span class="owner-badge">🛡️ Owner</span>' : ''}</div>
         <div class="fmeta">${r.fromTrophies||0} trophies</div>
       </div>
       <button class="btn-small accept">Accept</button>
@@ -2049,7 +2068,7 @@ async function renderFriendList(){
     row.innerHTML = `
       <div class="favatar">${friendGlyph(data)}</div>
       <div class="finfo">
-        <div class="fname">${escapeHtml(data.displayName || 'Anonymous')}</div>
+        <div class="fname">${escapeHtml(data.displayName || 'Anonymous')}${data.isOwner ? ' <span class="owner-badge">🛡️ Owner</span>' : ''}</div>
         <div class="fmeta">${league.icon} ${league.name} · ${data.trophies||0} trophies${(data.peakTrophies||0)>=2500 ? ' · 👑' : ''}</div>
       </div>
     `;
