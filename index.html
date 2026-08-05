@@ -156,6 +156,8 @@
     transition:border-color .15s,color .15s;
   }
   .skip-btn:hover{border-color:var(--amber);color:var(--amber);}
+  .skip-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .skip-btn:disabled:hover{border-color:var(--border);color:var(--text-dim);}
   @media (max-width:480px){
     .answer-row{flex-direction:column;align-items:center;}
     .answer-input{width:100%;max-width:260px;}
@@ -895,18 +897,27 @@ function genProblem(opsList, diff){
 /* ================= SESSION STATE ================= */
 let session = null;
 
+const MAX_SKIPS = 3;
+
+function updateSkipButtonLabel(btnId, remaining){
+  const btn = document.getElementById(btnId);
+  btn.textContent = remaining > 0 ? `Skip (${remaining} left)` : 'No skips left';
+  btn.disabled = remaining <= 0;
+}
+
 function startSession(){
   session = {
     score:0, wrong:0, streak:0, bestStreak:0,
     times:[], missed:[], current:null, questionStart:0,
     timer:null, timeLeft: lengthMode.type==='time' ? lengthMode.value : null,
     countTarget: lengthMode.type==='count' ? lengthMode.value : null,
-    seen:0
+    seen:0, skipCount: 0
   };
   document.getElementById('drillSettings').style.display='none';
   document.getElementById('drillSummary').style.display='none';
   document.getElementById('drillSession').style.display='block';
   updateHud();
+  updateSkipButtonLabel('skipBtn', MAX_SKIPS);
   nextProblem();
   document.getElementById('answerInput').focus();
 
@@ -973,8 +984,10 @@ function submitAnswer(){
 }
 
 function skipProblem(){
-  if(!session) return;
+  if(!session || session.skipCount >= MAX_SKIPS) return;
   if(session.advanceTimer) clearTimeout(session.advanceTimer);
+  session.skipCount++;
+  updateSkipButtonLabel('skipBtn', MAX_SKIPS - session.skipCount);
   nextProblem();
 }
 
@@ -1553,100 +1566,159 @@ function subtractionHasBorrow(a,b){ // assumes a>=b
   return had;
 }
 
-function genAddSubContinuous(d, op){
-  const digits = probRound(1 + d*1.0); // 1 digit at d=0 -> 2 digits at d=1
-  const [lo,hi] = digitRange(digits);
-  const wantCarry = Math.random() < (0.15 + d*0.65); // ~15% chance at d=0, ~80% at d=1
-  let a = randInt(lo,hi), b = randInt(lo,hi);
-  if(op === '-' && b > a){ const t=a; a=b; b=t; }
-  const hasFeature = () => op === '+' ? additionHasCarry(a,b) : subtractionHasBorrow(a,b);
-  let tries = 0;
-  while(tries < 12 && hasFeature() !== wantCarry){
-    a = randInt(lo,hi); b = randInt(lo,hi);
+// League gate: Iron through (most of) Diamond never see a multiplication/division where
+// BOTH numbers have 2+ digits. Only the top of Diamond (2250+ trophies) and Hyperleague do.
+function leagueAllowsBothMultiDigit(trophies){
+  return (trophies||0) >= 2250;
+}
+
+// A small curated pool of single-digit factors/divisors that skip the "too obvious" ones
+// (1,2,5,10-ish) — this is the actual lever for hard-stage difficulty in low/mid leagues,
+// instead of adding more digits.
+const AWKWARD_SINGLE = [6,7,8,9];
+function pickAwkwardSingle(){ return AWKWARD_SINGLE[randInt(0, AWKWARD_SINGLE.length-1)]; }
+function randIntAvoidRound(min, max){
+  if(max - min < 15) return randInt(min, max); // range too small to bother filtering
+  let v, tries = 0;
+  do { v = randInt(min, max); tries++; } while(v % 10 === 0 && tries < 10);
+  return v;
+}
+
+// Stage is purely a function of question index + elapsed match time, so it can only ever
+// move forward (easy -> medium -> hard) — never regresses mid-match, and both players see
+// the "hard" stage kick in at the same wall-clock moment (25s remaining), as intended.
+const HARD_STAGE_REMAINING = 25;
+function getStage(elapsedSec, questionIndex){
+  if(questionIndex <= 3) return 'easy';
+  if(MATCH_DURATION - elapsedSec <= HARD_STAGE_REMAINING) return 'hard';
+  return 'medium';
+}
+// Progress within medium/hard is also purely time-based (plus a small *fixed-per-match*
+// engagement nudge that can only push forward, never back) — nothing here can swing up and
+// down question-to-question the way a live rolling performance score would.
+function mediumProgress(elapsedSec, nudge){
+  const span = MATCH_DURATION - HARD_STAGE_REMAINING;
+  return Math.max(0, Math.min(1, elapsedSec / span + Math.max(0, nudge||0)));
+}
+function hardProgress(elapsedSec, nudge){
+  const into = elapsedSec - (MATCH_DURATION - HARD_STAGE_REMAINING);
+  return Math.max(0, Math.min(1, into / HARD_STAGE_REMAINING + Math.max(0, nudge||0)));
+}
+
+/* ---- EASY (questions 1-3): Key-Stage-4 basics ---- */
+function genEasy(op){
+  if(op === '+' || op === '-'){
+    let a = randInt(10,99), b = randInt(10,99);
     if(op === '-' && b > a){ const t=a; a=b; b=t; }
-    tries++;
+    return {a,b};
   }
-  return {a,b};
+  if(op === '×') return [randInt(1,9), randInt(1,9)];
+  const d = randInt(1,9), q = randInt(1,9);
+  return {divisor:d, quotient:q, dividend:d*q};
 }
-function genMultContinuous(d){
-  const aDigits = probRound(1 + Math.min(1,d) * 1.0);           // 1 -> 2
-  const bDigits = probRound(1 + Math.max(0, d - 0.3) * 1.43);   // stays 1-digit until d≈0.3, then -> 2
-  const [aLo,aHi] = digitRange(aDigits);
-  const [bLo,bHi] = digitRange(bDigits);
-  const a = randInt(aLo,aHi), b = randInt(bLo,bHi);
-  return Math.random() < 0.5 ? [a,b] : [b,a];
-}
-function genDivContinuous(d){
-  const divisorDigits = probRound(1 + Math.max(0, d - 0.3) * 1.43); // 1 -> 2
-  const quotientDigits = probRound(1 + d * 1.0);                    // 1 -> 2
-  const [dvLo,dvHi] = digitRange(divisorDigits);
-  const [qLo,qHi] = digitRange(quotientDigits);
-  const divisor = randInt(dvLo, dvHi);
-  const quotient = randInt(qLo, qHi);
+
+/* ---- MEDIUM: one clear step up. Mult/div size is fixed here (2-digit×1-digit) — the
+   step up for those comes from leaving 1×1 behind, not from continuing to grow. Add/sub
+   are the exception and keep scaling ("two+ digit"), per spec. ---- */
+function genMedium(op, progress){
+  if(op === '+' || op === '-'){
+    const digits = probRound(2 + progress*1.0); // 2 -> 3 digits across medium
+    const [lo,hi] = digitRange(digits);
+    const wantCarry = Math.random() < (0.3 + progress*0.4);
+    let a = randInt(lo,hi), b = randInt(lo,hi);
+    if(op === '-' && b > a){ const t=a; a=b; b=t; }
+    const hasFeature = () => op === '+' ? additionHasCarry(a,b) : subtractionHasBorrow(a,b);
+    let tries = 0;
+    while(tries < 12 && hasFeature() !== wantCarry){
+      a = randInt(lo,hi); b = randInt(lo,hi);
+      if(op === '-' && b > a){ const t=a; a=b; b=t; }
+      tries++;
+    }
+    return {a,b};
+  }
+  if(op === '×'){
+    const [lo,hi] = digitRange(2);
+    const big = randInt(lo,hi), small = randInt(1,9);
+    return Math.random() < 0.5 ? [big,small] : [small,big];
+  }
+  const divisor = randInt(2,9);
+  const qlo = Math.max(1, Math.ceil(10/divisor)), qhi = Math.floor(99/divisor);
+  const quotient = randInt(qlo, qhi); // dividend always lands 2-digit
   return {divisor, quotient, dividend: divisor*quotient};
 }
-function genProblemAdaptive(opsList, d){
-  const op = opsList[randInt(0, opsList.length-1)];
-  let a,b,answer,text;
+
+/* ---- HARD (last 25s): for low/mid leagues, the size of mult/div stays capped — awkward
+   factor choice is the only thing that escalates. Add/sub keep growing (3->4 digit), which
+   is the explicit exception. Both-multi-digit mult/div only unlocks at 2250+ trophies. ---- */
+function genHard(op, progress, allowBothMulti){
   if(op === '+' || op === '-'){
-    ({a,b} = genAddSubContinuous(d, op));
-    answer = op === '+' ? a+b : a-b;
-    text = op === '+' ? `${a} + ${b}` : `${a} − ${b}`;
-  } else if(op === '×'){
-    [a,b] = genMultContinuous(d);
-    answer = a*b; text = `${a} × ${b}`;
-  } else {
-    const res = genDivContinuous(d);
-    answer = res.quotient; text = `${res.dividend} ÷ ${res.divisor}`;
+    const digits = probRound(3 + progress*1.0); // 3 -> 4 digits across hard stage
+    const [lo,hi] = digitRange(digits);
+    const wantCarry = Math.random() < (0.6 + progress*0.35);
+    let a = randInt(lo,hi), b = randInt(lo,hi);
+    if(op === '-' && b > a){ const t=a; a=b; b=t; }
+    const hasFeature = () => op === '+' ? additionHasCarry(a,b) : subtractionHasBorrow(a,b);
+    let tries = 0;
+    while(tries < 12 && hasFeature() !== wantCarry){
+      a = randInt(lo,hi); b = randInt(lo,hi);
+      if(op === '-' && b > a){ const t=a; a=b; b=t; }
+      tries++;
+    }
+    return {a,b};
   }
-  return {text, answer};
+  if(op === '×'){
+    if(allowBothMulti){
+      const bigDigits = probRound(2 + progress*0.7); // occasionally 3-digit near time-up
+      const [lo,hi] = digitRange(bigDigits);
+      const a = randIntAvoidRound(lo,hi), b = randIntAvoidRound(10,99);
+      return Math.random() < 0.5 ? [a,b] : [b,a];
+    }
+    const [lo,hi] = digitRange(2); // stays 2-digit × 1-digit — awkwardness, not size, escalates
+    const big = randIntAvoidRound(lo,hi);
+    const useAwkward = Math.random() < (0.4 + progress*0.6);
+    const small = useAwkward ? pickAwkwardSingle() : randInt(2,9);
+    return Math.random() < 0.5 ? [big,small] : [small,big];
+  }
+  // division
+  if(allowBothMulti){
+    const divisor = randIntAvoidRound(10,99);
+    const qDigits = probRound(2 + progress*0.7);
+    const [qLo,qHi] = digitRange(qDigits);
+    const quotient = randIntAvoidRound(qLo,qHi);
+    return {divisor, quotient, dividend: divisor*quotient};
+  }
+  const useAwkward = Math.random() < (0.4 + progress*0.6);
+  const divisor = useAwkward ? pickAwkwardSingle() : randInt(2,9);
+  const qlo = Math.max(1, Math.ceil(10/divisor)), qhi = Math.floor(99/divisor);
+  const quotient = randInt(qlo, qhi); // dividend stays 2-digit — no size growth here either
+  return {divisor, quotient, dividend: divisor*quotient};
 }
 
-function computePerfScore(history){
-  if(!history || history.length === 0) return 0;
-  const recent = history.slice(-20);
-  const accuracy = recent.filter(h=>h.correct).length / recent.length;
-  const accuracyScore = Math.max(-1, Math.min(1, (accuracy - 0.75) * 2));
+function genProblemStaged(opsList, stage, progress, allowBothMulti){
+  const op = opsList[randInt(0, opsList.length-1)];
+  const result = stage === 'easy' ? genEasy(op)
+    : stage === 'medium' ? genMedium(op, progress)
+    : genHard(op, progress, allowBothMulti);
 
-  // Speed only kicks in with enough samples, uses the median of a trimmed set (drops the
-  // slowest/fastest ~10%) so a single stalled or rushed answer can't swing the result —
-  // and so answering slowly on purpose has only a small, bounded effect (see weight below).
-  const correctTimes = recent.filter(h=>h.correct).map(h=>h.time).sort((x,y)=>x-y);
-  let speedScore = 0;
-  if(correctTimes.length >= 3){
-    const trim = Math.floor(correctTimes.length * 0.1);
-    const trimmed = correctTimes.slice(trim, correctTimes.length - trim || correctTimes.length);
-    const median = trimmed[Math.floor(trimmed.length/2)];
-    speedScore = Math.max(-1, Math.min(1, (3 - median) / 3));
-  }
-  return Math.max(-1, Math.min(1, accuracyScore*0.7 + speedScore*0.3)); // accuracy weighted above speed
+  if(op === '+') return {text:`${result.a} + ${result.b}`, answer: result.a+result.b};
+  if(op === '-') return {text:`${result.a} − ${result.b}`, answer: result.a-result.b};
+  if(op === '×') return {text:`${result[0]} × ${result[1]}`, answer: result[0]*result[1]};
+  return {text:`${result.dividend} ÷ ${result.divisor}`, answer: result.quotient};
 }
 
-function computeTargetDifficulty(){
+function computeTargetStage(){
   const elapsed = (Date.now() - onlineState.startedAt)/1000;
   const qIndex = onlineState.questionIndex || 1;
+  const stage = getStage(elapsed, qIndex);
+  const nudge = onlineState.engagementNudge || 0;
 
-  if(qIndex <= 3){
-    // First 3 questions are always easy — not just a lower baseline, since with only 1-2
-    // answers logged so far a single lucky/fast one could otherwise swing the adaptive
-    // term up immediately and undercut the "easy start" guarantee.
-    return 0.05;
+  if(stage === 'easy') return {stage, progress:0, syntheticDifficulty:0.05};
+  if(stage === 'medium'){
+    const progress = mediumProgress(elapsed, nudge);
+    return {stage, progress, syntheticDifficulty: 0.3 + progress*0.3};
   }
-
-  const remaining = MATCH_DURATION - elapsed;
-  let timeBase;
-  if(remaining > 25){
-    timeBase = 0.28; // plateau: not too easy, not too hard
-  } else {
-    const rampProgress = Math.min(1, (25 - remaining) / 25); // 0 at 25s left -> 1 at time-up
-    timeBase = 0.28 + rampProgress * 0.62;
-  }
-
-  const perf = computePerfScore(onlineState.answerHistory);
-  const adaptiveAdjust = perf * 0.35;
-  const streakBonus = Math.min(0.15, (onlineState.myStreak||0) * 0.02); // streaks slightly accelerate difficulty
-  const target = timeBase + adaptiveAdjust + streakBonus + (onlineState.engagementNudge||0);
-  return Math.max(0.03, Math.min(1, target));
+  const progress = hardProgress(elapsed, nudge);
+  return {stage, progress, syntheticDifficulty: 0.65 + progress*0.35};
 }
 
 /* ================= ONLINE: BATTLE LOG ================= */
@@ -2179,6 +2251,7 @@ function startMatchLoop(){
   document.getElementById('matchMyScore').textContent = '0';
   document.getElementById('matchOppScore').textContent = '0';
   document.getElementById('matchClock').textContent = MATCH_DURATION;
+  updateSkipButtonLabel('matchSkipBtn', MAX_SKIPS);
   nextMatchProblem();
   document.getElementById('matchAnswerInput').focus();
 
@@ -2193,10 +2266,11 @@ function startMatchLoop(){
 
 function nextMatchProblem(){
   onlineState.questionIndex = (onlineState.questionIndex || 0) + 1;
-  const difficulty = computeTargetDifficulty();
+  const {stage, progress, syntheticDifficulty} = computeTargetStage();
   onlineState.difficultyHistory = onlineState.difficultyHistory || [];
-  onlineState.difficultyHistory.push(difficulty);
-  onlineState.current = genProblemAdaptive(ONLINE_OPS, difficulty);
+  onlineState.difficultyHistory.push(syntheticDifficulty);
+  const allowBothMulti = leagueAllowsBothMultiDigit(profile.trophies);
+  onlineState.current = genProblemStaged(ONLINE_OPS, stage, progress, allowBothMulti);
   document.getElementById('matchProblemText').textContent = onlineState.current.text;
   const input = document.getElementById('matchAnswerInput');
   input.value = '';
@@ -2241,8 +2315,10 @@ function submitMatchAnswer(){
 
 function skipMatchProblem(){
   if(!onlineState || onlineState.current == null) return;
+  if((onlineState.skipCount||0) >= MAX_SKIPS) return;
   if(onlineState.advanceTimer) clearTimeout(onlineState.advanceTimer);
   onlineState.skipCount = (onlineState.skipCount || 0) + 1;
+  updateSkipButtonLabel('matchSkipBtn', MAX_SKIPS - onlineState.skipCount);
   const elapsed = (Date.now() - onlineState.startedAt)/1000;
   if(elapsed < MATCH_DURATION) nextMatchProblem();
 }
