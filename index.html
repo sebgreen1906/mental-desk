@@ -697,11 +697,21 @@
 
       <div class="panel">
         <h2 class="section-title">Lifetime stats</h2>
-        <div class="summary-grid">
+        <div class="chip-row" id="statsModeToggle" style="margin-bottom:16px;">
+          <div class="chip on" data-mode="offline">Offline</div>
+          <div class="chip" data-mode="online">Online</div>
+        </div>
+        <div class="summary-grid" id="offlineStatsGrid">
           <div class="summary-stat"><div class="num" id="profTotalCorrect">0</div><div class="lab">Correct answers</div></div>
           <div class="summary-stat"><div class="num" id="profTotalSessions">0</div><div class="lab">Sessions played</div></div>
           <div class="summary-stat"><div class="num" id="profBestStreak">0</div><div class="lab">Best streak ever</div></div>
           <div class="summary-stat"><div class="num" id="profBestAcc">0%</div><div class="lab">Best session accuracy</div></div>
+        </div>
+        <div class="summary-grid" id="onlineStatsGrid" style="display:none;">
+          <div class="summary-stat"><div class="num" id="profOnlineWins">0</div><div class="lab">Wins</div></div>
+          <div class="summary-stat"><div class="num" id="profOnlineLosses">0</div><div class="lab">Losses</div></div>
+          <div class="summary-stat"><div class="num" id="profOnlineDraws">0</div><div class="lab">Draws</div></div>
+          <div class="summary-stat"><div class="num" id="profOnlineWinRate">0%</div><div class="lab">Win rate</div></div>
         </div>
       </div>
 
@@ -1479,6 +1489,13 @@ function renderProfile(){
   document.getElementById('profBestStreak').textContent = profile.bestStreakEver;
   document.getElementById('profBestAcc').textContent = (profile.bestSession ? profile.bestSession.accuracy : 0) + '%';
 
+  const onlineWins = profile.onlineWins || 0, onlineLosses = profile.onlineLosses || 0, onlineDraws = profile.onlineDraws || 0;
+  const onlineTotal = onlineWins + onlineLosses + onlineDraws;
+  document.getElementById('profOnlineWins').textContent = onlineWins;
+  document.getElementById('profOnlineLosses').textContent = onlineLosses;
+  document.getElementById('profOnlineDraws').textContent = onlineDraws;
+  document.getElementById('profOnlineWinRate').textContent = (onlineTotal ? Math.round(onlineWins/onlineTotal*100) : 0) + '%';
+
   renderBannerRow('bannerRowOffline', 'offline');
   renderBannerRow('bannerRowOnline', 'online');
 
@@ -1609,6 +1626,16 @@ document.getElementById('emailOptInInput').addEventListener('change', e=>{
   if(!profile) return;
   profile.emailOptIn = e.target.checked;
   saveProfile();
+});
+
+document.querySelectorAll('#statsModeToggle .chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('#statsModeToggle .chip').forEach(c=>c.classList.remove('on'));
+    chip.classList.add('on');
+    const mode = chip.dataset.mode;
+    document.getElementById('offlineStatsGrid').style.display = mode === 'offline' ? 'grid' : 'none';
+    document.getElementById('onlineStatsGrid').style.display = mode === 'online' ? 'grid' : 'none';
+  });
 });
 
 /* ================= OWNER: MAILING LIST EXPORT ================= */
