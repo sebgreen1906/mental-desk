@@ -288,6 +288,12 @@
     font-family:var(--font-display);font-weight:600;font-size:12px;cursor:pointer;padding:0;
   }
   .battle-details-btn:hover{text-decoration:underline;}
+  .battle-toggle-btn{
+    display:block;width:100%;margin-top:4px;padding:10px;background:transparent;border:1px dashed var(--border);
+    border-radius:8px;color:var(--text-dim);font-family:var(--font-display);font-weight:600;font-size:12px;
+    cursor:pointer;text-align:center;
+  }
+  .battle-toggle-btn:hover{border-color:var(--amber);color:var(--amber);}
 
   #lobbyLeagueBadge, #profileLeagueBadge{display:inline-block;cursor:pointer;}
 
@@ -1715,22 +1721,48 @@ async function logMatchToHistory({result, displayScore, oppDisplayScore, trophyD
   setDoc(ref, entry).catch(err=>console.error('Failed to log match history', err));
 }
 
+let battleLogEntries = [];
+let battleLogExpanded = false;
+
 async function renderBattleLog(){
   const list = document.getElementById('battleLogList');
   if(!list || !currentUser) return;
   list.innerHTML = '<div class="empty-note">Loading…</div>';
   try {
-    const q = query(collection(db, 'users', currentUser.uid, 'matchHistory'), orderBy('timestamp','desc'), limit(20));
+    const q = query(collection(db, 'users', currentUser.uid, 'matchHistory'), orderBy('timestamp','desc'), limit(5));
     const snap = await getDocs(q);
-    if(snap.empty){
-      list.innerHTML = '<div class="empty-note">No matches played yet — find a match to get started.</div>';
-      return;
-    }
-    list.innerHTML = '';
-    snap.forEach(d=> renderBattleEntry(list, d.data()));
+    battleLogEntries = [];
+    snap.forEach(d=> battleLogEntries.push(d.data()));
+    battleLogExpanded = false;
+    renderBattleLogList();
   } catch(err){
     console.error('Failed to load battle log', err);
     list.innerHTML = '<div class="empty-note">Couldn\'t load battle log.</div>';
+  }
+}
+
+function renderBattleLogList(){
+  const list = document.getElementById('battleLogList');
+  if(!list) return;
+  list.innerHTML = '';
+  if(battleLogEntries.length === 0){
+    list.innerHTML = '<div class="empty-note">No matches played yet — find a match to get started.</div>';
+    return;
+  }
+  const shown = battleLogExpanded ? battleLogEntries : battleLogEntries.slice(0, 1);
+  shown.forEach(m => renderBattleEntry(list, m));
+
+  if(battleLogEntries.length > 1){
+    const toggle = document.createElement('button');
+    toggle.className = 'battle-toggle-btn';
+    toggle.textContent = battleLogExpanded
+      ? '▲ Show fewer'
+      : `▼ Show last ${battleLogEntries.length} matches`;
+    toggle.addEventListener('click', ()=>{
+      battleLogExpanded = !battleLogExpanded;
+      renderBattleLogList();
+    });
+    list.appendChild(toggle);
   }
 }
 
