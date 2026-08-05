@@ -188,6 +188,12 @@
 
   /* ---------- HEADER ACTIONS / AUTH ---------- */
   .header-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .help-btn{
+    width:38px;height:38px;border-radius:50%;background:var(--panel-alt);border:1px solid var(--border);
+    color:var(--text-dim);font-family:var(--font-display);font-weight:700;font-size:16px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .help-btn:hover{border-color:var(--amber);color:var(--amber);}
   .auth-widget{display:flex;align-items:center;gap:10px;}
   .signin-btn{
     display:flex;align-items:center;gap:8px;background:var(--panel-alt);border:1px solid var(--border);
@@ -338,6 +344,21 @@
     font-family:var(--font-display);font-weight:700;
   }
 
+  /* ---------- TUTORIAL ---------- */
+  .tutorial-dots{display:flex;gap:6px;margin-bottom:16px;}
+  .tutorial-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:background .15s;}
+  .tutorial-dot.active{background:var(--amber);}
+  .tutorial-nav{display:flex;gap:10px;margin-top:22px;}
+  .tutorial-nav button{flex:1;margin-top:0;}
+  .streak-demo{
+    background:var(--panel-alt);border:1px solid var(--border);border-radius:10px;padding:18px;margin-top:16px;
+  }
+  .streak-demo-row{display:flex;justify-content:space-around;text-align:center;font-size:13px;color:var(--text-dim);margin-bottom:14px;}
+  .streak-demo-row b{display:block;font-family:var(--font-display);font-size:24px;color:var(--amber);margin-top:2px;}
+  .streak-demo .btn-row{display:flex;gap:10px;}
+  .streak-demo .btn-row button{flex:1;margin-top:0;}
+  .streak-demo-note{margin-top:12px;font-size:12px;color:var(--text-faint);text-align:center;min-height:16px;}
+
   .match-hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:10px;}
   .match-side{flex:1;text-align:center;}
   .match-side .pname{font-size:12px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -407,6 +428,7 @@
         <button data-view="friends">Friends</button>
         <button data-view="profile">Profile</button>
       </nav>
+      <button class="help-btn" id="helpBtn" aria-label="How to play" title="How to play">?</button>
       <div class="auth-widget" id="authWidget">
         <button class="signin-btn" id="signinBtn"><span class="g-badge">G</span>Sign in with Google</button>
         <div class="user-chip" id="userChip" style="display:none;">
@@ -747,6 +769,20 @@
     <div class="modal-sub" id="matchDetailsSub"></div>
     <div class="summary-grid" id="matchDetailsStats"></div>
     <div id="matchDetailsAddFriendWrap" style="margin-top:16px;"></div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="tutorialModal">
+  <div class="modal-box">
+    <button class="modal-close" id="tutorialClose" aria-label="Close">✕</button>
+    <div class="tutorial-dots" id="tutorialDots"></div>
+    <div class="modal-title" id="tutorialTitle"></div>
+    <div class="modal-sub" id="tutorialBody"></div>
+    <div id="tutorialInteractive"></div>
+    <div class="tutorial-nav">
+      <button class="btn-secondary" id="tutorialBackBtn">Back</button>
+      <button class="start-btn" id="tutorialNextBtn">Next</button>
+    </div>
   </div>
 </div>
 
@@ -1091,6 +1127,7 @@ function defaultProfile(user){
     onlineLosses: 0,
     onlineDraws: 0,
     friends: [],
+    hasSeenTutorial: false,
     createdAt: Date.now(),
     updatedAt: Date.now()
   };
@@ -1173,7 +1210,147 @@ function closeMatchDetailsModal(){
   document.getElementById('matchDetailsModal').classList.add('hidden');
 }
 document.addEventListener('keydown', e=>{
-  if(e.key === 'Escape'){ closeLeagueModal(); closeMatchDetailsModal(); }
+  if(e.key === 'Escape'){ closeLeagueModal(); closeMatchDetailsModal(); closeTutorialModal(); }
+});
+
+/* ================= TUTORIAL ================= */
+const TUTORIAL_STEPS = [
+  {
+    title: 'Welcome to Mental Desk',
+    body: `Mental Desk trains fast, accurate mental arithmetic — the same reflexes tested in
+      finance and consulting interviews. There are two ways to play: <b>Speed Drills</b>,
+      solo practice at your own pace, and <b>Online</b>, 60-second ranked duels against
+      other players. This quick walkthrough covers scoring, leagues, and trophies.`
+  },
+  {
+    title: 'Speed Drills & your IQ Score',
+    body: `Pick your operations, difficulty, and session length, then answer as many
+      problems as you can. Every session updates your <b>IQ Score</b> — it starts at 100
+      and moves up or down based on your accuracy. It's a personal skill tracker for
+      offline practice only, and is never affected by anything that happens online.`
+  },
+  {
+    title: 'Online Duels',
+    body: `In Online mode, you and an opponent — a real player, or a bot if none are
+      available — both get 60 seconds of the same style of questions. You never see their
+      questions, only their live score. Whoever scores more when time's up wins. Questions
+      start easy, step up gradually, and get genuinely hard in the last 25 seconds.`
+  },
+  {
+    title: 'The Streak Multiplier',
+    body: `Every correct answer scores points — but a streak makes each one worth more:
+      normal answers score ×1, reach a 5-answer streak and you earn ×2 per answer, reach
+      10 and it's ×3. One wrong answer resets your streak back to ×1. Try it below:`,
+    interactive: 'streakDemo'
+  },
+  {
+    title: 'Leagues & Trophies',
+    body: `Winning a ranked online match earns you <b>Trophies</b> — losing costs you some
+      too, with the amount depending on the trophy gap between you and your opponent
+      (upsetting a much stronger opponent pays out more). Trophies place you into a
+      league: Iron → Bronze → Silver → Gold → Diamond → Hyperleague, up to a 3,000-trophy
+      cap. Tap any league badge in the app any time to see the full ladder.`
+  },
+  {
+    title: 'IQ Score vs Trophies',
+    body: `These are two completely separate numbers. <b>IQ Score</b> reflects your own
+      accuracy in solo Speed Drills — no opponent, no risk, just tracking your personal
+      improvement. <b>Trophies</b> are your competitive rank from ranked Online
+      matches — they only move from real ranked duels, never from Speed Drills, and never
+      from a Friendly private match with a friend. A high IQ Score doesn't guarantee a
+      high trophy count, or vice versa — they measure different things.`
+  }
+];
+let tutorialStepIndex = 0;
+let tutorialDemoStreak = 0;
+
+function openTutorial(){
+  tutorialStepIndex = 0;
+  renderTutorialStep();
+  document.getElementById('tutorialModal').classList.remove('hidden');
+}
+
+function closeTutorialModal(){
+  const modal = document.getElementById('tutorialModal');
+  if(modal.classList.contains('hidden')) return;
+  modal.classList.add('hidden');
+  localStorage.setItem('md_tutorial_seen', '1');
+  if(profile && !profile.hasSeenTutorial){
+    profile.hasSeenTutorial = true;
+    saveProfile();
+  }
+}
+
+function renderTutorialStep(){
+  const step = TUTORIAL_STEPS[tutorialStepIndex];
+  document.getElementById('tutorialTitle').textContent = step.title;
+  document.getElementById('tutorialBody').innerHTML = step.body;
+
+  const dots = document.getElementById('tutorialDots');
+  dots.innerHTML = TUTORIAL_STEPS.map((_, i)=>
+    `<span class="tutorial-dot${i===tutorialStepIndex?' active':''}"></span>`).join('');
+
+  const interactiveWrap = document.getElementById('tutorialInteractive');
+  interactiveWrap.innerHTML = '';
+  if(step.interactive === 'streakDemo') renderStreakDemo(interactiveWrap);
+
+  document.getElementById('tutorialBackBtn').style.visibility = tutorialStepIndex === 0 ? 'hidden' : 'visible';
+  document.getElementById('tutorialNextBtn').textContent =
+    tutorialStepIndex === TUTORIAL_STEPS.length - 1 ? "Let's play!" : 'Next';
+}
+
+function renderStreakDemo(container){
+  tutorialDemoStreak = 0;
+  container.innerHTML = `
+    <div class="streak-demo">
+      <div class="streak-demo-row">
+        <div>Streak<b id="demoStreak">0</b></div>
+        <div>Multiplier<b id="demoMult">×1</b></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-secondary" id="demoCorrectBtn">Tap for a correct answer</button>
+        <button class="btn-secondary" id="demoResetBtn">Reset</button>
+      </div>
+      <div class="streak-demo-note" id="demoNote"></div>
+    </div>
+  `;
+  const streakEl = container.querySelector('#demoStreak');
+  const multEl = container.querySelector('#demoMult');
+  const noteEl = container.querySelector('#demoNote');
+  const updateDemo = ()=>{
+    streakEl.textContent = tutorialDemoStreak;
+    const mult = tutorialDemoStreak >= 10 ? 3 : tutorialDemoStreak >= 5 ? 2 : 1;
+    multEl.textContent = `×${mult}`;
+    noteEl.textContent = tutorialDemoStreak >= 10 ? 'Maxed out — every answer now scores triple!'
+      : tutorialDemoStreak >= 5 ? 'Streak of 5+ reached — double points!'
+      : 'Keep going — 5 in a row doubles your points.';
+  };
+  container.querySelector('#demoCorrectBtn').addEventListener('click', ()=>{
+    tutorialDemoStreak++;
+    updateDemo();
+  });
+  container.querySelector('#demoResetBtn').addEventListener('click', ()=>{
+    tutorialDemoStreak = 0;
+    updateDemo();
+  });
+  updateDemo();
+}
+
+document.getElementById('helpBtn').addEventListener('click', openTutorial);
+document.getElementById('tutorialClose').addEventListener('click', closeTutorialModal);
+document.getElementById('tutorialModal').addEventListener('click', e=>{
+  if(e.target.id === 'tutorialModal') closeTutorialModal();
+});
+document.getElementById('tutorialBackBtn').addEventListener('click', ()=>{
+  if(tutorialStepIndex > 0){ tutorialStepIndex--; renderTutorialStep(); }
+});
+document.getElementById('tutorialNextBtn').addEventListener('click', ()=>{
+  if(tutorialStepIndex < TUTORIAL_STEPS.length - 1){
+    tutorialStepIndex++;
+    renderTutorialStep();
+  } else {
+    closeTutorialModal();
+  }
 });
 
 let currentUser = null;
@@ -1207,6 +1384,7 @@ async function loadProfile(){
   startInboxListener();
   renderOnlineGate();
   renderFriendsGate();
+  if(!profile.hasSeenTutorial) openTutorial();
 }
 
 function saveProfile(){
@@ -2692,6 +2870,7 @@ onAuthStateChanged(auth, async (user)=>{
     renderProfile();
     renderOnlineGate();
     renderFriendsGate();
+    if(!localStorage.getItem('md_tutorial_seen')) openTutorial();
   }
 });
 </script>
