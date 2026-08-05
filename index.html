@@ -274,6 +274,7 @@
   .battle-outcome{font-family:var(--font-display);font-weight:700;font-size:15px;}
   .battle-outcome.win{color:var(--green);}
   .battle-outcome.loss{color:var(--red);}
+  .battle-outcome.draw{color:var(--amber);}
   .battle-trophy{font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--text-dim);white-space:nowrap;}
   .battle-trophy.up{color:var(--green);}
   .battle-trophy.down{color:var(--red);}
@@ -349,6 +350,7 @@
   .result-banner .outcome{font-family:var(--font-display);font-size:26px;font-weight:700;}
   .result-banner .outcome.win{color:var(--green);}
   .result-banner .outcome.loss{color:var(--red);}
+  .result-banner .outcome.draw{color:var(--amber);}
   .trophy-delta{font-family:var(--font-display);font-size:18px;margin-top:8px;}
   .trophy-delta.up{color:var(--green);}
   .trophy-delta.down{color:var(--red);}
@@ -1087,6 +1089,7 @@ function defaultProfile(user){
     onlineLossStreak: 0,
     onlineWins: 0,
     onlineLosses: 0,
+    onlineDraws: 0,
     friends: [],
     createdAt: Date.now(),
     updatedAt: Date.now()
@@ -1191,6 +1194,7 @@ async function loadProfile(){
     profile.onlineLossStreak = profile.onlineLossStreak || 0;
     profile.onlineWins = profile.onlineWins || 0;
     profile.onlineLosses = profile.onlineLosses || 0;
+    profile.onlineDraws = profile.onlineDraws || 0;
     profile.friends = profile.friends || [];
     profile.emailOptIn = profile.emailOptIn || false;
   } else {
@@ -1841,15 +1845,18 @@ function renderBattleLogList(){
 function renderBattleEntry(container, m){
   const league = LEAGUES.find(l=>l.id===m.opponentLeagueId) || LEAGUES[0];
   const isWin = m.result === 'win';
+  const isDraw = m.result === 'draw';
   const row = document.createElement('div');
   row.className = 'battle-entry';
-  const trophyHtml = m.mode === 'friendly'
-    ? '<span class="battle-trophy">Friendly</span>'
+  const trophyHtml = (m.mode === 'friendly' || isDraw)
+    ? `<span class="battle-trophy">${isDraw ? 'Draw' : 'Friendly'}</span>`
     : `<span class="battle-trophy ${m.trophyDelta>=0?'up':'down'}">${m.trophyDelta>=0?'+':''}${m.trophyDelta} 🏆</span>`;
   const modeTag = m.mode === 'friendly' ? '🤝 Friendly Match' : '🏆 Ranked Match';
+  const outcomeLabel = isDraw ? 'Draw' : (isWin ? 'Victory' : 'Defeat');
+  const outcomeClass = isDraw ? 'draw' : (isWin ? 'win' : 'loss');
   row.innerHTML = `
     <div class="battle-top">
-      <span class="battle-outcome ${isWin?'win':'loss'}">${isWin?'Victory':'Defeat'}${m.forfeited?' (forfeit)':''}</span>
+      <span class="battle-outcome ${outcomeClass}">${outcomeLabel}${m.forfeited?' (forfeit)':''}</span>
       ${trophyHtml}
     </div>
     <div class="battle-score">${m.displayScore} – ${m.oppDisplayScore}</div>
@@ -1864,7 +1871,8 @@ function renderBattleEntry(container, m){
 }
 
 function openMatchDetails(m){
-  document.getElementById('matchDetailsTitle').textContent = m.result === 'win' ? 'Victory' : 'Defeat';
+  document.getElementById('matchDetailsTitle').textContent =
+    m.result === 'draw' ? 'Draw' : (m.result === 'win' ? 'Victory' : 'Defeat');
   const modeLabel = m.mode === 'friendly' ? 'Friendly Match' : 'Ranked Match';
   document.getElementById('matchDetailsSub').textContent =
     `vs ${m.opponentName}${m.opponentIsBot ? ' (bot)' : ''} · ${modeLabel} · ${formatRelativeTime(m.timestamp)}`;
@@ -2383,16 +2391,14 @@ function endMatch(){
   const oppUid = onlineState.oppUid;
   const oppTrophies = onlineState.oppTrophiesAtStart ?? (profile.trophies||0);
 
-  let iWon;
-  if(myMatchScore !== oppMatchScore){
-    iWon = myMatchScore > oppMatchScore;
-  } else {
-    iWon = currentUser.uid < (oppUid || 'zzzz');
-  }
+  // Scores are always whole numbers now (see the streak-multiplier fix), so this comparison
+  // reflects a genuine tie, not two different scores that happened to round the same way.
+  const isDraw = myMatchScore === oppMatchScore;
+  const iWon = !isDraw && myMatchScore > oppMatchScore;
 
   let actualDelta = 0, beforeLeague = null, afterLeague = null;
 
-  if(!isFriendly){
+  if(!isFriendly && !isDraw){
     const delta = trophyDelta(profile.trophies||0, oppTrophies, iWon);
     beforeLeague = leagueForTrophies(profile.trophies||0);
     const wasOnLossStreak = (profile.onlineLossStreak||0) >= 3;
@@ -2421,6 +2427,10 @@ function endMatch(){
 
     applyProfileToTicker();
     saveProfile();
+  } else if(!isFriendly && isDraw){
+    profile.onlineDraws = (profile.onlineDraws||0) + 1;
+    applyProfileToTicker();
+    saveProfile();
   }
 
   if(!isBot && matchId){
@@ -2429,14 +2439,18 @@ function endMatch(){
 
   showOnlinePanel('result');
   const outcomeEl = document.getElementById('resultOutcome');
-  outcomeEl.textContent = iWon ? 'You win' : 'You lose';
-  outcomeEl.className = 'outcome ' + (iWon ? 'win' : 'loss');
+  outcomeEl.textContent = isDraw ? 'Draw' : (iWon ? 'You win' : 'You lose');
+  outcomeEl.className = 'outcome ' + (isDraw ? 'draw' : (iWon ? 'win' : 'loss'));
   document.getElementById('resultScoreLine').textContent =
     `${Math.round(myMatchScore)} – ${Math.round(oppMatchScore)} (${myRaw} correct)`;
   const deltaEl = document.getElementById('resultTrophyDelta');
   const transEl = document.getElementById('resultLeagueTransition');
   if(isFriendly){
     deltaEl.textContent = 'Friendly match — no trophies at stake';
+    deltaEl.className = 'trophy-delta';
+    transEl.textContent = '';
+  } else if(isDraw){
+    deltaEl.textContent = 'Draw — no trophies won or lost';
     deltaEl.className = 'trophy-delta';
     transEl.textContent = '';
   } else {
@@ -2451,9 +2465,9 @@ function endMatch(){
   }
 
   logMatchToHistory({
-    result: iWon ? 'win' : 'loss',
+    result: isDraw ? 'draw' : (iWon ? 'win' : 'loss'),
     displayScore: Math.round(myMatchScore), oppDisplayScore: Math.round(oppMatchScore),
-    trophyDelta: isFriendly ? 0 : (iWon ? actualDelta : -actualDelta)
+    trophyDelta: (isFriendly || isDraw) ? 0 : (iWon ? actualDelta : -actualDelta)
   });
 
   onlineState = null;
