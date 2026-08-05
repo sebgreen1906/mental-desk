@@ -2236,8 +2236,8 @@ function runBotSimulation(){
     if(correct){
       onlineState.botCorrectCount++;
       onlineState.botStreak++;
-      const mult = onlineState.botStreak >= 10 ? 2 : onlineState.botStreak >= 5 ? 1.5 : 1;
-      onlineState.oppMatchScore = Math.round((onlineState.oppMatchScore + mult) * 10) / 10;
+      const mult = onlineState.botStreak >= 10 ? 3 : onlineState.botStreak >= 5 ? 2 : 1;
+      onlineState.oppMatchScore = onlineState.oppMatchScore + mult;
     } else {
       onlineState.botStreak = 0;
     }
@@ -2293,8 +2293,8 @@ function submitMatchAnswer(){
     onlineState.myScore++;
     onlineState.myStreak++;
     onlineState.myBestStreak = Math.max(onlineState.myBestStreak, onlineState.myStreak);
-    const mult = onlineState.myStreak >= 10 ? 2 : onlineState.myStreak >= 5 ? 1.5 : 1;
-    onlineState.myMatchScore = Math.round((onlineState.myMatchScore + mult) * 10) / 10;
+    const mult = onlineState.myStreak >= 10 ? 3 : onlineState.myStreak >= 5 ? 2 : 1;
+    onlineState.myMatchScore = onlineState.myMatchScore + mult;
   } else {
     onlineState.myWrong++;
     onlineState.myStreak = 0;
