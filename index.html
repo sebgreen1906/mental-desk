@@ -370,12 +370,35 @@
   .footer-link:hover{color:var(--amber);}
 
   .match-hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:10px;}
-  .match-side{flex:1;text-align:center;}
+  .match-side{flex:1;text-align:center;position:relative;}
   .match-side .pname{font-size:12px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .match-side .pscore{font-family:var(--font-display);font-size:30px;font-weight:700;color:var(--text);}
   .match-side.me .pscore{color:var(--amber);}
-  .match-vs{font-family:var(--font-display);font-size:13px;color:var(--text-faint);padding:0 10px;}
+  .match-vs{font-family:var(--font-display);font-size:13px;color:var(--text-faint);padding:0 10px;display:flex;flex-direction:column;align-items:center;gap:6px;}
   .match-clock{text-align:center;font-family:var(--font-display);font-weight:700;font-size:20px;color:var(--amber);margin-bottom:14px;}
+
+  /* ---------- EMOTES ---------- */
+  .emote-trigger-btn{
+    width:26px;height:26px;border-radius:50%;background:var(--panel-alt);border:1px solid var(--border);
+    color:var(--text-dim);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .emote-trigger-btn:hover{border-color:var(--amber);color:var(--amber);}
+  .emote-trigger-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .emote-tray{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:0 0 16px;}
+  .emote-tray.hidden{display:none;}
+  .emote-option{
+    background:var(--panel-alt);border:1px solid var(--border);border-radius:20px;padding:8px 14px;
+    font-family:var(--font-mono);font-size:13px;color:var(--text);cursor:pointer;transition:border-color .15s;
+  }
+  .emote-option:hover{border-color:var(--amber);color:var(--amber);}
+  .emote-bubble{
+    position:absolute;top:-40px;left:50%;transform:translateX(-50%) translateY(4px);
+    background:var(--panel-raised);border:1px solid var(--amber);border-radius:10px;padding:6px 12px;
+    font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;
+    box-shadow:0 4px 14px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;z-index:5;
+  }
+  .emote-bubble.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .emote-bubble.hidden{display:none;}
 
   .result-banner{text-align:center;padding:10px;}
   .result-banner .outcome{font-family:var(--font-display);font-size:26px;font-weight:700;}
@@ -596,14 +619,25 @@
       <div class="match-clock" id="matchClock">60</div>
       <div class="match-hud">
         <div class="match-side me">
+          <div class="emote-bubble hidden" id="myEmoteBubble"></div>
           <div class="pname">You</div>
           <div class="pscore" id="matchMyScore">0</div>
         </div>
-        <div class="match-vs">VS</div>
+        <div class="match-vs">
+          VS
+          <button class="emote-trigger-btn" id="emoteBtn" aria-label="Send an emote">💬</button>
+        </div>
         <div class="match-side">
+          <div class="emote-bubble hidden" id="oppEmoteBubble"></div>
           <div class="pname" id="matchOppName">Opponent</div>
           <div class="pscore" id="matchOppScore">0</div>
         </div>
+      </div>
+      <div class="emote-tray hidden" id="emoteTray">
+        <button class="emote-option" data-emote="well_played">Well Played</button>
+        <button class="emote-option" data-emote="nerd">🤓</button>
+        <button class="emote-option" data-emote="thinking">🤔</button>
+        <button class="emote-option" data-emote="good_luck">Good Luck</button>
       </div>
       <div class="problem-card" id="matchProblemCard">
         <div class="problem-text" id="matchProblemText">–</div>
@@ -2551,8 +2585,13 @@ async function enterMatch(matchId){
 
   onlineState.oppUnsub = onSnapshot(doc(db,'matches', matchId, 'players', oppUid), (snap)=>{
     if(snap.exists() && onlineState){
-      onlineState.oppMatchScore = snap.data().matchScore || 0;
+      const data = snap.data();
+      onlineState.oppMatchScore = data.matchScore || 0;
       document.getElementById('matchOppScore').textContent = Math.round(onlineState.oppMatchScore);
+      if(data.emoteAt && data.emoteAt !== onlineState.lastSeenOppEmoteAt){
+        onlineState.lastSeenOppEmoteAt = data.emoteAt;
+        showEmoteBubble('oppEmoteBubble', data.emote);
+      }
     }
   });
 
@@ -2629,12 +2668,71 @@ function runBotSimulation(){
   }, 1000 + randInt(-150,150));
 }
 
+/* ================= ONLINE: EMOTES ================= */
+const EMOTES = {
+  well_played: 'Well Played',
+  nerd: '🤓',
+  thinking: '🤔',
+  good_luck: 'Good Luck'
+};
+const EMOTE_COOLDOWN_MS = 3000;
+let lastEmoteSentAt = 0;
+
+function showEmoteBubble(elId, emoteId){
+  const label = EMOTES[emoteId];
+  if(!label) return;
+  const el = document.getElementById(elId);
+  el.textContent = label;
+  el.classList.remove('hidden');
+  el.classList.add('show');
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(()=> el.classList.remove('show'), 2600);
+}
+
+function sendEmote(emoteId){
+  if(!onlineState || !EMOTES[emoteId]) return;
+  const now = Date.now();
+  if(now - lastEmoteSentAt < EMOTE_COOLDOWN_MS) return;
+  lastEmoteSentAt = now;
+
+  document.getElementById('emoteTray').classList.add('hidden');
+  showEmoteBubble('myEmoteBubble', emoteId);
+
+  const btn = document.getElementById('emoteBtn');
+  btn.disabled = true;
+  setTimeout(()=>{ btn.disabled = false; }, EMOTE_COOLDOWN_MS);
+
+  if(onlineState.isBot){
+    setTimeout(()=>{
+      if(!onlineState || !onlineState.isBot) return;
+      const ids = Object.keys(EMOTES);
+      showEmoteBubble('oppEmoteBubble', ids[randInt(0, ids.length-1)]);
+    }, 900 + randInt(0,700));
+  } else {
+    updateDoc(doc(db,'matches', onlineState.matchId, 'players', currentUser.uid), {
+      emote: emoteId, emoteAt: now
+    }).catch(err=>console.error('Failed to send emote', err));
+  }
+}
+
+document.getElementById('emoteBtn').addEventListener('click', ()=>{
+  document.getElementById('emoteTray').classList.toggle('hidden');
+});
+document.querySelectorAll('.emote-option').forEach(btn=>{
+  btn.addEventListener('click', ()=> sendEmote(btn.dataset.emote));
+});
+
 function startMatchLoop(){
   showOnlinePanel('match');
   document.getElementById('matchMyScore').textContent = '0';
   document.getElementById('matchOppScore').textContent = '0';
   document.getElementById('matchClock').textContent = MATCH_DURATION;
   updateSkipButtonLabel('matchSkipBtn', MAX_SKIPS);
+  document.getElementById('emoteTray').classList.add('hidden');
+  document.getElementById('myEmoteBubble').classList.remove('show');
+  document.getElementById('oppEmoteBubble').classList.remove('show');
+  document.getElementById('emoteBtn').disabled = false;
+  lastEmoteSentAt = 0;
   nextMatchProblem();
   document.getElementById('matchAnswerInput').focus();
 
