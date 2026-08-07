@@ -359,6 +359,16 @@
   .streak-demo .btn-row button{flex:1;margin-top:0;}
   .streak-demo-note{margin-top:12px;font-size:12px;color:var(--text-faint);text-align:center;min-height:16px;}
 
+  /* ---------- PRIVACY POLICY ---------- */
+  .privacy-body{font-size:13px;color:var(--text-dim);line-height:1.6;max-height:42vh;overflow-y:auto;padding-right:8px;margin-top:10px;}
+  .privacy-body h4{color:var(--text);font-family:var(--font-display);font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin:18px 0 6px;}
+  .privacy-body h4:first-child{margin-top:0;}
+  .privacy-body p{margin:0 0 10px;}
+  .privacy-body ul{margin:0 0 10px;padding-left:18px;}
+  .privacy-body li{margin-bottom:4px;}
+  .footer-link{color:var(--text-faint);text-decoration:underline;cursor:pointer;}
+  .footer-link:hover{color:var(--amber);}
+
   .match-hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:10px;}
   .match-side{flex:1;text-align:center;}
   .match-side .pname{font-size:12px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -760,7 +770,7 @@
     </div>
   </section>
 
-  <footer class="foot">MENTAL DESK — practice tool. No data leaves this session.</footer>
+  <footer class="foot">MENTAL DESK — practice tool. <span class="footer-link" id="privacyLinkFooter">Privacy Policy</span></footer>
 </div>
 
 <div class="modal-overlay hidden" id="leagueModal">
@@ -792,6 +802,83 @@
     <div class="tutorial-nav">
       <button class="btn-secondary" id="tutorialBackBtn">Back</button>
       <button class="start-btn" id="tutorialNextBtn">Next</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="privacyModal">
+  <div class="modal-box">
+    <div class="modal-title">Privacy Policy</div>
+    <div class="modal-sub">Please read before playing. Last updated: August 2026.</div>
+    <div class="privacy-body">
+      <h4>Who this covers</h4>
+      <p>This policy covers Mental Desk, a browser-based arithmetic practice and ranked
+        matchmaking game. It's a small, independently-run project — "we" below means the
+        developer of Mental Desk.</p>
+
+      <h4>Information we collect</h4>
+      <p>If you sign in with Google, Firebase Authentication shares your name, email
+        address, and profile photo with us. If you choose not to sign in, you can still
+        use Speed Drills — nothing about you is collected or stored.</p>
+      <p>Once signed in, we store a game profile for you, including:</p>
+      <ul>
+        <li>Your display name, chosen avatar, and email address</li>
+        <li>Age and gender — entirely optional, only if you choose to enter them</li>
+        <li>Gameplay data: IQ Score, trophies, league, match history, streaks, and earned
+          banners</li>
+        <li>Your friends list and any friend requests you send or receive</li>
+        <li>Whether you've opted in to receive occasional emails from Mental Desk</li>
+      </ul>
+
+      <h4>How we use it</h4>
+      <ul>
+        <li>To run your account, save your progress, and show your stats back to you</li>
+        <li>To operate ranked matchmaking, leagues, and the friends system</li>
+        <li>To personalize aspects of your experience</li>
+        <li>If — and only if — you check "Get occasional emails," to contact you directly
+          about Mental Desk. You can turn this off any time from your Profile page.</li>
+      </ul>
+      <p>If you've opted in to emails, the developer may compile an internal list of
+        opted-in users' emails (along with age, gender, and engagement stats like trophies
+        or IQ Score, if provided) for sending those emails. This list is not sold or given
+        to advertisers or other third parties.</p>
+
+      <h4>What other players can see</h4>
+      <p>Your display name, chosen avatar, trophies, and league are visible to other
+        signed-in users — this is how friend search, friend requests, and the battle log
+        work. Your email, age, and gender are never shown to other players.</p>
+
+      <h4>Where your data is stored</h4>
+      <p>Everything is stored using Google Firebase (Authentication and Firestore), a
+        third-party infrastructure provider that hosts and secures the data on our behalf.
+        We don't run our own servers or databases. We don't use advertising trackers or
+        third-party analytics.</p>
+
+      <h4>Children's privacy</h4>
+      <p>Mental Desk is not directed at children under 13. If you believe a child has
+        given us personal information, contact us using the details below and we'll
+        delete it.</p>
+
+      <h4>Your choices</h4>
+      <ul>
+        <li>You can sign out at any time</li>
+        <li>You can change or remove your age, gender, and email opt-in from your Profile
+          page whenever you like</li>
+        <li>To request a copy of your data, or to have your account deleted entirely,
+          contact us at the email below</li>
+      </ul>
+
+      <h4>Changes to this policy</h4>
+      <p>If this policy changes in a meaningful way, we'll update the "last updated" date
+        above. Continuing to use Mental Desk after a change means you accept the update.</p>
+
+      <h4>Contact</h4>
+      <p>Questions, data requests, or concerns: <b>sebgreen1906@gmail.com</b></p>
+    </div>
+    <div class="save-hint" id="privacyDeclineNote" style="display:none;color:var(--red);"></div>
+    <div class="tutorial-nav">
+      <button class="btn-secondary" id="privacyDeclineBtn">Decline</button>
+      <button class="start-btn" id="privacyAcceptBtn">I Accept</button>
     </div>
   </div>
 </div>
@@ -1138,6 +1225,7 @@ function defaultProfile(user){
     onlineDraws: 0,
     friends: [],
     hasSeenTutorial: false,
+    hasAcceptedPrivacyPolicy: false,
     createdAt: Date.now(),
     updatedAt: Date.now()
   };
@@ -1220,7 +1308,7 @@ function closeMatchDetailsModal(){
   document.getElementById('matchDetailsModal').classList.add('hidden');
 }
 document.addEventListener('keydown', e=>{
-  if(e.key === 'Escape'){ closeLeagueModal(); closeMatchDetailsModal(); closeTutorialModal(); }
+  if(e.key === 'Escape'){ closeLeagueModal(); closeMatchDetailsModal(); closeTutorialModal(); closePrivacyModalIfAccepted(); }
 });
 
 /* ================= TUTORIAL ================= */
@@ -1269,6 +1357,12 @@ const TUTORIAL_STEPS = [
       matches — they only move from real ranked duels, never from Speed Drills, and never
       from a Friendly private match with a friend. A high IQ Score doesn't guarantee a
       high trophy count, or vice versa — they measure different things.`
+  },
+  {
+    title: 'Stay in the loop',
+    body: `Want to hear about new features, leagues, and events? We'll only email you
+      occasionally — never spam — and you can turn it off any time from your Profile page.`,
+    interactive: 'emailOptIn'
   }
 ];
 let tutorialStepIndex = 0;
@@ -1303,6 +1397,7 @@ function renderTutorialStep(){
   const interactiveWrap = document.getElementById('tutorialInteractive');
   interactiveWrap.innerHTML = '';
   if(step.interactive === 'streakDemo') renderStreakDemo(interactiveWrap);
+  if(step.interactive === 'emailOptIn') renderTutorialEmailOptIn(interactiveWrap);
 
   document.getElementById('tutorialBackBtn').style.visibility = tutorialStepIndex === 0 ? 'hidden' : 'visible';
   document.getElementById('tutorialNextBtn').textContent =
@@ -1346,6 +1441,29 @@ function renderStreakDemo(container){
   updateDemo();
 }
 
+function renderTutorialEmailOptIn(container){
+  const checked = profile ? !!profile.emailOptIn : localStorage.getItem('md_pending_email_optin') === '1';
+  container.innerHTML = `
+    <label style="display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13px;color:var(--text-dim);cursor:pointer;">
+      <input type="checkbox" id="tutorialEmailOptIn" ${checked ? 'checked' : ''} />
+      Get occasional emails from Mental Desk
+    </label>
+    <div class="save-hint" id="tutorialEmailNote" style="margin-top:8px;"></div>
+  `;
+  container.querySelector('#tutorialEmailNote').textContent = profile
+    ? '' : "Sign in with Google to lock this in — we'll remember your choice.";
+  container.querySelector('#tutorialEmailOptIn').addEventListener('change', e=>{
+    if(profile){
+      profile.emailOptIn = e.target.checked;
+      saveProfile();
+      const profileCheckbox = document.getElementById('emailOptInInput');
+      if(profileCheckbox) profileCheckbox.checked = e.target.checked;
+    } else {
+      localStorage.setItem('md_pending_email_optin', e.target.checked ? '1' : '0');
+    }
+  });
+}
+
 document.getElementById('helpBtn').addEventListener('click', openTutorial);
 document.getElementById('tutorialClose').addEventListener('click', closeTutorialModal);
 document.getElementById('tutorialModal').addEventListener('click', e=>{
@@ -1362,6 +1480,50 @@ document.getElementById('tutorialNextBtn').addEventListener('click', ()=>{
     closeTutorialModal();
   }
 });
+
+/* ================= PRIVACY POLICY ================= */
+// Gates first-time use: shown before the tutorial, and unlike the other modals it can't be
+// dismissed by clicking outside or (while unaccepted) via Escape — only "I Accept" proceeds.
+function hasAcceptedPrivacy(){
+  return profile ? !!profile.hasAcceptedPrivacyPolicy : !!localStorage.getItem('md_privacy_accepted');
+}
+
+function runOnboardingFlow(){
+  if(!hasAcceptedPrivacy()){
+    openPrivacyModal();
+    return;
+  }
+  const tutorialSeen = profile ? profile.hasSeenTutorial : localStorage.getItem('md_tutorial_seen');
+  if(!tutorialSeen) openTutorial();
+}
+
+function openPrivacyModal(){
+  const accepted = hasAcceptedPrivacy();
+  document.getElementById('privacyDeclineBtn').style.display = accepted ? 'none' : 'block';
+  document.getElementById('privacyAcceptBtn').textContent = accepted ? 'Close' : 'I Accept';
+  document.getElementById('privacyDeclineNote').style.display = 'none';
+  document.getElementById('privacyModal').classList.remove('hidden');
+}
+
+function closePrivacyModalIfAccepted(){
+  if(hasAcceptedPrivacy()) document.getElementById('privacyModal').classList.add('hidden');
+}
+
+document.getElementById('privacyAcceptBtn').addEventListener('click', ()=>{
+  localStorage.setItem('md_privacy_accepted', '1');
+  if(profile && !profile.hasAcceptedPrivacyPolicy){
+    profile.hasAcceptedPrivacyPolicy = true;
+    saveProfile();
+  }
+  document.getElementById('privacyModal').classList.add('hidden');
+  runOnboardingFlow();
+});
+document.getElementById('privacyDeclineBtn').addEventListener('click', ()=>{
+  const note = document.getElementById('privacyDeclineNote');
+  note.textContent = "You'll need to accept the Privacy Policy to use Mental Desk.";
+  note.style.display = 'block';
+});
+document.getElementById('privacyLinkFooter').addEventListener('click', openPrivacyModal);
 
 let currentUser = null;
 let profile = null;
@@ -1388,13 +1550,21 @@ async function loadProfile(){
     profile = defaultProfile(currentUser);
     await setDoc(ref, profile);
   }
+
+  const pendingOptIn = localStorage.getItem('md_pending_email_optin');
+  if(pendingOptIn !== null){
+    profile.emailOptIn = pendingOptIn === '1';
+    localStorage.removeItem('md_pending_email_optin');
+    saveProfile();
+  }
+
   applyProfileToTicker();
   renderProfile();
   syncPublicProfile();
   startInboxListener();
   renderOnlineGate();
   renderFriendsGate();
-  if(!profile.hasSeenTutorial) openTutorial();
+  runOnboardingFlow();
 }
 
 function saveProfile(){
@@ -2897,7 +3067,7 @@ onAuthStateChanged(auth, async (user)=>{
     renderProfile();
     renderOnlineGate();
     renderFriendsGate();
-    if(!localStorage.getItem('md_tutorial_seen')) openTutorial();
+    runOnboardingFlow();
   }
 });
 </script>
