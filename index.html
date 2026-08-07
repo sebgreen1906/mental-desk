@@ -433,6 +433,10 @@
   .friend-row .finfo{flex:1;min-width:0;}
   .friend-row .fname{font-family:var(--font-display);font-weight:600;font-size:14px;}
   .friend-row .fmeta{font-size:11px;color:var(--text-faint);margin-top:2px;}
+  .friend-row .fpresence{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-faint);margin-top:3px;}
+  .presence-dot{width:7px;height:7px;border-radius:50%;background:var(--text-faint);flex-shrink:0;}
+  .presence-dot.online{background:var(--green);box-shadow:0 0 6px var(--green);}
+  .friend-row .factions{display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
   .btn-small{padding:8px 14px;font-size:12px;border-radius:6px;border:1px solid var(--border);background:var(--panel-raised);color:var(--text);cursor:pointer;font-family:var(--font-display);font-weight:600;white-space:nowrap;}
   .btn-small:hover{border-color:var(--amber);color:var(--amber);}
   .btn-small.accept{border-color:var(--green);color:var(--green);}
@@ -606,8 +610,8 @@
     <!-- Private lobby: waiting for friend -->
     <div class="panel" id="onlineFriendWait" style="display:none;">
       <div class="queue-status">
-        <h2 class="section-title" style="justify-content:center;">Waiting for your friend</h2>
-        <p>Share this code, or send them a link that joins automatically:</p>
+        <h2 class="section-title" style="justify-content:center;" id="friendWaitTitle">Waiting for your friend</h2>
+        <p id="friendWaitSub">Share this code, or send them a link that joins automatically:</p>
         <div class="lobby-code" id="lobbyCodeDisplay">------</div>
         <button class="btn-secondary" id="copyLobbyLinkBtn" style="max-width:240px;margin:0 auto 10px;">Copy invite link</button>
         <button class="btn-secondary" id="cancelLobbyBtn" style="max-width:200px;margin:0 auto;">Cancel</button>
@@ -688,6 +692,11 @@
       <div class="panel">
         <h2 class="section-title">Friend requests</h2>
         <div class="request-list" id="requestList"></div>
+      </div>
+
+      <div class="panel">
+        <h2 class="section-title">Match challenges</h2>
+        <div class="request-list" id="challengeList"></div>
       </div>
 
       <div class="panel">
@@ -969,6 +978,7 @@ document.querySelectorAll('nav.tabs button').forEach(btn=>{
     btn.classList.add('active');
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    if(btn.dataset.view !== 'friends') stopFriendsRefresh();
     if(btn.dataset.view === 'online') renderOnlineGate();
     if(btn.dataset.view === 'friends') renderFriendsGate();
   });
@@ -1596,6 +1606,7 @@ async function loadProfile(){
   renderProfile();
   syncPublicProfile();
   startInboxListener();
+  startPresenceHeartbeat();
   renderOnlineGate();
   renderFriendsGate();
   runOnboardingFlow();
@@ -1623,6 +1634,40 @@ function syncPublicProfile(){
   setDoc(doc(db, 'publicProfiles', currentUser.uid), pub, {merge:true})
     .catch(err=>console.error('Public profile sync failed', err));
 }
+
+/* ================= PRESENCE (lightweight "recently active" heartbeat) =================
+   There's no realtime presence backend here (that needs Firebase Realtime Database +
+   onDisconnect, a bigger infra lift) — instead each client pings its own publicProfiles
+   doc with a timestamp every 60s while the tab is visible, and a friend is shown as
+   "Online" if that timestamp is within the last 2 minutes. Good enough approximation
+   without needing new infrastructure; someone who abruptly loses connection can show as
+   online for up to ~2 minutes after actually leaving.
+*/
+const PRESENCE_INTERVAL_MS = 60000;
+const ONLINE_THRESHOLD_MS = 120000;
+let presenceInterval = null;
+
+function sendPresenceHeartbeat(){
+  if(!currentUser) return;
+  updateDoc(doc(db, 'publicProfiles', currentUser.uid), { lastActive: Date.now() })
+    .catch(err=>console.error('Presence heartbeat failed', err));
+}
+function startPresenceHeartbeat(){
+  stopPresenceHeartbeat();
+  sendPresenceHeartbeat();
+  presenceInterval = setInterval(()=>{
+    if(document.visibilityState === 'visible') sendPresenceHeartbeat();
+  }, PRESENCE_INTERVAL_MS);
+}
+function stopPresenceHeartbeat(){
+  if(presenceInterval){ clearInterval(presenceInterval); presenceInterval = null; }
+}
+function isFriendOnline(lastActive){
+  return !!lastActive && (Date.now() - lastActive) < ONLINE_THRESHOLD_MS;
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible' && currentUser) sendPresenceHeartbeat();
+});
 
 function escapeHtml(str){
   return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -2439,7 +2484,7 @@ function generateLobbyCode(){
   return code;
 }
 
-async function createFriendLobby(){
+async function createFriendLobby(challengeTargetUid, challengeTargetName){
   let code, ref, snap;
   for(let attempt=0; attempt<5; attempt++){
     code = generateLobbyCode();
@@ -2460,8 +2505,23 @@ async function createFriendLobby(){
     return;
   }
 
-  lobbyState = { code, unsub: null };
+  if(challengeTargetUid){
+    setDoc(doc(db, 'users', challengeTargetUid, 'inbox', currentUser.uid), {
+      type: 'friend_challenge',
+      fromUid: currentUser.uid, fromName: profile.displayName,
+      fromAvatarPreset: profile.avatarPreset || null, fromPhotoURL: profile.photoURL || '',
+      fromTrophies: profile.trophies || 0,
+      code, createdAt: Date.now()
+    }).catch(err=>console.error('Failed to send challenge notification', err));
+  }
+
+  lobbyState = { code, unsub: null, challengeTargetUid: challengeTargetUid || null };
   document.getElementById('lobbyCodeDisplay').textContent = code;
+  document.getElementById('friendWaitTitle').textContent =
+    challengeTargetName ? `Waiting for ${challengeTargetName}` : 'Waiting for your friend';
+  document.getElementById('friendWaitSub').textContent = challengeTargetName
+    ? `${challengeTargetName} has been notified — or share the code/link below too:`
+    : 'Share this code, or send them a link that joins automatically:';
   showOnlinePanel('friendWait');
 
   lobbyState.unsub = onSnapshot(ref, (s)=>{
@@ -2512,7 +2572,7 @@ function cancelFriendLobby(){
   showOnlinePanel('lobby');
 }
 
-document.getElementById('createLobbyBtn').addEventListener('click', createFriendLobby);
+document.getElementById('createLobbyBtn').addEventListener('click', ()=> createFriendLobby());
 document.getElementById('joinLobbyBtn').addEventListener('click', ()=>
   joinFriendLobby(document.getElementById('joinCodeInput').value));
 document.getElementById('joinCodeInput').addEventListener('keydown', e=>{
@@ -2956,10 +3016,13 @@ function startInboxListener(){
   if(inboxUnsub) inboxUnsub();
   inboxUnsub = onSnapshot(collection(db, 'users', currentUser.uid, 'inbox'), (snap)=>{
     const requests = [];
+    const challenges = [];
     snap.forEach(d=>{
       const data = d.data();
       if(data.type === 'friend_request'){
         requests.push({id:d.id, ...data});
+      } else if(data.type === 'friend_challenge'){
+        challenges.push({id:d.id, ...data});
       } else if(data.type === 'friend_accept'){
         if(profile && !profile.friends.includes(data.byUid)){
           profile.friends.push(data.byUid);
@@ -2967,14 +3030,76 @@ function startInboxListener(){
           renderFriendList();
         }
         deleteDoc(doc(db,'users',currentUser.uid,'inbox',d.id)).catch(()=>{});
+      } else if(data.type === 'challenge_declined'){
+        if(lobbyState && lobbyState.code === data.code){
+          cancelFriendLobby();
+          alert(`${data.byName || 'Your friend'} declined the challenge.`);
+        }
+        deleteDoc(doc(db,'users',currentUser.uid,'inbox',d.id)).catch(()=>{});
       }
     });
     renderRequestList(requests);
+    renderChallengeList(challenges);
   }, err=>console.error('Inbox listener failed', err));
+}
+
+function renderChallengeList(challenges){
+  const list = document.getElementById('challengeList');
+  if(!list) return;
+  list.innerHTML = '';
+  if(challenges.length === 0){
+    list.innerHTML = '<div class="empty-note">No pending challenges.</div>';
+    return;
+  }
+  challenges.forEach(c=>{
+    const row = document.createElement('div');
+    row.className = 'friend-row';
+    row.innerHTML = `
+      <div class="favatar">${friendGlyph({avatarPreset:c.fromAvatarPreset, photoURL:c.fromPhotoURL})}</div>
+      <div class="finfo">
+        <div class="fname">${escapeHtml(c.fromName || 'Anonymous')}</div>
+        <div class="fmeta">Challenged you to a Desk Duel</div>
+      </div>
+      <button class="btn-small accept">Accept</button>
+      <button class="btn-small decline">Decline</button>
+    `;
+    row.querySelector('.accept').addEventListener('click', ()=> acceptChallenge(c));
+    row.querySelector('.decline').addEventListener('click', ()=> declineChallenge(c));
+    list.appendChild(row);
+  });
+}
+
+function acceptChallenge(c){
+  if(onlineState){
+    alert("Finish or forfeit your current match first.");
+    return;
+  }
+  deleteDoc(doc(db, 'users', currentUser.uid, 'inbox', c.id)).catch(()=>{});
+  document.querySelector('nav.tabs button[data-view="online"]').click();
+  joinFriendLobby(c.code);
+}
+
+function declineChallenge(c){
+  setDoc(doc(db, 'users', c.fromUid, 'inbox', currentUser.uid), {
+    type: 'challenge_declined', byUid: currentUser.uid, byName: profile.displayName,
+    code: c.code, createdAt: Date.now()
+  }).catch(err=>console.error('Failed to notify decline', err));
+  deleteDoc(doc(db, 'users', currentUser.uid, 'inbox', c.id)).catch(()=>{});
 }
 
 function stopInboxListener(){
   if(inboxUnsub){ inboxUnsub(); inboxUnsub = null; }
+}
+
+let friendsRefreshInterval = null;
+function startFriendsRefresh(){
+  stopFriendsRefresh();
+  friendsRefreshInterval = setInterval(()=>{
+    if(currentUser && profile) renderFriendList();
+  }, 30000);
+}
+function stopFriendsRefresh(){
+  if(friendsRefreshInterval){ clearInterval(friendsRefreshInterval); friendsRefreshInterval = null; }
 }
 
 function renderFriendsGate(){
@@ -2988,6 +3113,7 @@ function renderFriendsGate(){
   signedOut.style.display = 'none';
   signedIn.style.display = 'block';
   renderFriendList();
+  startFriendsRefresh();
 }
 
 function friendGlyph(data){
@@ -3127,8 +3253,9 @@ async function renderFriendList(){
     list.innerHTML = '<div class="empty-note">No friends yet — search for players above.</div>';
     return;
   }
-  valid.forEach(({data})=>{
+  valid.forEach(({uid, data})=>{
     const league = leagueForTrophies(data.trophies || 0);
+    const online = isFriendOnline(data.lastActive);
     const row = document.createElement('div');
     row.className = 'friend-row';
     row.innerHTML = `
@@ -3136,10 +3263,29 @@ async function renderFriendList(){
       <div class="finfo">
         <div class="fname">${escapeHtml(data.displayName || 'Anonymous')}${data.isOwner ? ' <span class="owner-badge">🛡️ Owner</span>' : ''}</div>
         <div class="fmeta">${league.icon} ${league.name} · ${data.trophies||0} trophies${(data.peakTrophies||0)>=2500 ? ' · 👑' : ''}</div>
+        <div class="fpresence"><span class="presence-dot ${online?'online':''}"></span>${online ? 'Online' : 'Offline'}</div>
+      </div>
+      <div class="factions">
+        <button class="btn-small" data-challenge-uid="${uid}">⚔️ Challenge</button>
       </div>
     `;
+    row.querySelector('[data-challenge-uid]').addEventListener('click', ()=>
+      sendFriendChallenge(uid, data.displayName || 'Anonymous'));
     list.appendChild(row);
   });
+}
+
+function sendFriendChallenge(uid, name){
+  if(onlineState){
+    alert("Finish or forfeit your current match before challenging someone else.");
+    return;
+  }
+  if(lobbyState){
+    alert("You're already waiting on a private match — cancel it first from the Online tab.");
+    return;
+  }
+  document.querySelector('nav.tabs button[data-view="online"]').click();
+  createFriendLobby(uid, name);
 }
 
 onAuthStateChanged(auth, async (user)=>{
@@ -3155,6 +3301,8 @@ onAuthStateChanged(auth, async (user)=>{
   } else {
     profile = null;
     stopInboxListener();
+    stopPresenceHeartbeat();
+    stopFriendsRefresh();
     stopMatchmakingListeners();
     if(onlineState){
       if(onlineState.timer) clearInterval(onlineState.timer);
