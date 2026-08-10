@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://mental-desk.com/sitemap.xml
