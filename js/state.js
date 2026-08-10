@@ -26,5 +26,6 @@ export const state = {
 
   lastEmoteSentAt: 0,
 
-  pendingSignupAge: null
+  pendingSignupAge: null,
+  pendingSignupUsername: null
 };

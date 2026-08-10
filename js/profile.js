@@ -28,7 +28,7 @@ export const ACHIEVEMENTS = [
 
 export function defaultProfile(user) {
   return {
-    displayName: user.displayName || 'Anonymous',
+    username: null,
     email: user.email || '',
     photoURL: user.photoURL || '',
     avatarPreset: null,
@@ -69,6 +69,42 @@ function profileRef() {
   return doc(db, 'users', state.currentUser.uid);
 }
 
+/* ================= USERNAME (unique, replaces the old free-text displayName) =================
+   Claiming is done via an atomic Firestore "create-only" security rule on usernames/{name} —
+   setDoc() throws a permission-denied error if that doc already exists (Firestore classifies it
+   as an update, which the rules don't grant), so there's no read-then-write race to worry about.
+*/
+const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
+export function isValidUsername(str) {
+  return USERNAME_REGEX.test(str);
+}
+
+function sanitizeUsernameBase(raw) {
+  const stripped = (raw || '').replace(/[^a-zA-Z0-9_]/g, '');
+  return stripped.slice(0, 20) || 'Player';
+}
+
+async function claimUsername(candidate, uid) {
+  try {
+    await setDoc(doc(db, 'usernames', candidate.toLowerCase()), { uid, createdAt: Date.now() });
+    return true;
+  } catch (err) {
+    return false; // already claimed by someone else
+  }
+}
+
+async function resolveUsername(preferred, uid) {
+  const base = sanitizeUsernameBase(preferred);
+  if (await claimUsername(base, uid)) return base;
+  for (let i = 2; i <= 50; i++) {
+    const candidate = `${base}${i}`.slice(0, 20);
+    if (await claimUsername(candidate, uid)) return candidate;
+  }
+  const fallback = `${base}${Date.now().toString().slice(-6)}`.slice(0, 20);
+  await claimUsername(fallback, uid);
+  return fallback;
+}
+
 export async function loadProfile() {
   const ref = profileRef();
   const snap = await getDoc(ref);
@@ -93,6 +129,19 @@ export async function loadProfile() {
   // opt-in) into their profile the moment they sign in — otherwise these all default back
   // to false/unset on a brand-new profile and the whole onboarding sequence re-triggers.
   let migrated = false;
+
+  // Every profile needs a unique username — brand-new profiles never had one, and profiles
+  // created before this feature existed need one backfilled too. Email signups pass their
+  // chosen name via state.pendingSignupUsername; everything else (Google, legacy accounts)
+  // falls back to whatever name is already on hand, auto-suffixed if it's taken.
+  if (!state.profile.username) {
+    const preferred = state.pendingSignupUsername || state.currentUser.displayName || 'Player';
+    state.profile.username = await resolveUsername(preferred, state.currentUser.uid);
+    updateAuthProfile(state.currentUser, { displayName: state.profile.username }).catch(() => {});
+    migrated = true;
+  }
+  state.pendingSignupUsername = null;
+
   const pendingOptIn = localStorage.getItem('md_pending_email_optin');
   if (pendingOptIn !== null) {
     state.profile.emailOptIn = pendingOptIn === '1';
@@ -135,8 +184,8 @@ export function syncPublicProfile() {
   if (!state.currentUser || !state.profile) return;
   const profile = state.profile;
   const pub = {
-    displayName: profile.displayName,
-    displayNameLower: (profile.displayName || '').toLowerCase(),
+    username: profile.username,
+    usernameLower: (profile.username || '').toLowerCase(),
     avatarPreset: profile.avatarPreset || null,
     photoURL: profile.photoURL || '',
     trophies: profile.trophies || 0,
@@ -183,7 +232,7 @@ export function renderAuthHeader() {
     userChip.style.display = 'flex';
     signoutBtn.style.display = 'inline-block';
     document.getElementById('userChipName').textContent =
-      ((state.profile && state.profile.displayName) || state.currentUser.displayName || 'You') + (isOwner(state.currentUser) ? ' 🛡️' : '');
+      ((state.profile && state.profile.username) || state.currentUser.displayName || 'You') + (isOwner(state.currentUser) ? ' 🛡️' : '');
     renderAvatarInto(document.getElementById('userChipAvatar'));
   } else {
     signinBtn.style.display = 'flex';
@@ -206,7 +255,7 @@ export function renderProfile() {
   signedInPanel.style.display = 'block';
 
   document.getElementById('profileName').innerHTML =
-    escapeHtml(profile.displayName) + (isOwner(state.currentUser) ? ' <span class="owner-badge">🛡️ Owner</span>' : '');
+    escapeHtml(profile.username) + (isOwner(state.currentUser) ? ' <span class="owner-badge">🛡️ Owner</span>' : '');
   document.getElementById('profileEmail').textContent = profile.email;
   document.getElementById('profileIq').textContent = profile.iqScore;
   renderAvatarInto(document.getElementById('profileAvatar'));
@@ -310,9 +359,8 @@ export function doSignIn() {
   });
 }
 
-export async function createAccountWithEmail(email, password, displayName) {
+export async function createAccountWithEmail(email, password) {
   const cred = await createUserWithEmailAndPassword(auth, email, password);
-  if (displayName) await updateAuthProfile(cred.user, { displayName });
   return cred.user;
 }
 

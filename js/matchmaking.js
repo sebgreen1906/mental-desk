@@ -52,7 +52,7 @@ export async function startMatchmaking() {
   try {
     await setDoc(doc(db, 'matchQueue', state.currentUser.uid), {
       uid: state.currentUser.uid, trophies: state.profile.trophies || 0, searchCenter: center,
-      displayName: state.profile.displayName, avatarPreset: state.profile.avatarPreset || null,
+      displayName: state.profile.username, avatarPreset: state.profile.avatarPreset || null,
       photoURL: state.profile.photoURL || '', queuedAt: Date.now(), status: 'waiting'
     });
   } catch (err) {
@@ -115,7 +115,7 @@ async function tryClaimMatch(opponentUid) {
       tx.update(oppRef, { status: 'matched', matchId });
       tx.set(doc(db, 'matches', matchId), {
         playerIds: [state.currentUser.uid, opponentUid],
-        playerNames: { [state.currentUser.uid]: state.profile.displayName, [opponentUid]: oppData.displayName || 'Opponent' },
+        playerNames: { [state.currentUser.uid]: state.profile.username, [opponentUid]: oppData.displayName || 'Opponent' },
         playerTrophies: { [state.currentUser.uid]: state.profile.trophies || 0, [opponentUid]: oppData.trophies || 0 },
         mode: 'ranked',
         startedAt: Date.now(),
@@ -172,7 +172,7 @@ export async function createFriendLobby(challengeTargetUid, challengeTargetName)
   }
   try {
     await setDoc(ref, {
-      code, hostUid: state.currentUser.uid, hostName: state.profile.displayName,
+      code, hostUid: state.currentUser.uid, hostName: state.profile.username,
       hostAvatarPreset: state.profile.avatarPreset || null, hostPhotoURL: state.profile.photoURL || '',
       hostTrophies: state.profile.trophies || 0,
       guestUid: null, status: 'waiting', matchId: null, createdAt: Date.now()
@@ -186,7 +186,7 @@ export async function createFriendLobby(challengeTargetUid, challengeTargetName)
   if (challengeTargetUid) {
     setDoc(doc(db, 'users', challengeTargetUid, 'inbox', state.currentUser.uid), {
       type: 'friend_challenge',
-      fromUid: state.currentUser.uid, fromName: state.profile.displayName,
+      fromUid: state.currentUser.uid, fromName: state.profile.username,
       fromAvatarPreset: state.profile.avatarPreset || null, fromPhotoURL: state.profile.photoURL || '',
       fromTrophies: state.profile.trophies || 0,
       code, createdAt: Date.now()
@@ -227,7 +227,7 @@ export async function joinFriendLobby(rawCode) {
       tx.update(ref, { status: 'matched', guestUid: state.currentUser.uid, matchId });
       tx.set(doc(db, 'matches', matchId), {
         playerIds: [data.hostUid, state.currentUser.uid],
-        playerNames: { [data.hostUid]: data.hostName, [state.currentUser.uid]: state.profile.displayName },
+        playerNames: { [data.hostUid]: data.hostName, [state.currentUser.uid]: state.profile.username },
         playerTrophies: { [data.hostUid]: data.hostTrophies || 0, [state.currentUser.uid]: state.profile.trophies || 0 },
         mode: 'friendly',
         startedAt: Date.now(),
@@ -264,7 +264,7 @@ export function lobbyInviteLink(code) {
 document.getElementById('copyLobbyLinkBtn').addEventListener('click', async () => {
   if (!state.lobbyState) return;
   const link = lobbyInviteLink(state.lobbyState.code);
-  const name = (state.profile && state.profile.displayName) || 'Someone';
+  const name = (state.profile && state.profile.username) || 'Someone';
   const message = `${name} has challenged you to a Desk Duel! ${link}`;
   const btn = document.getElementById('copyLobbyLinkBtn');
   const original = btn.textContent;

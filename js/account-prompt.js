@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { doSignIn, createAccountWithEmail, signInWithEmail } from './profile.js';
+import { doSignIn, createAccountWithEmail, signInWithEmail, isValidUsername } from './profile.js';
 import { runOnboardingFlow } from './privacy.js';
 
 /* ================= ACCOUNT PROMPT (post-privacy, pre-tutorial) =================
@@ -29,7 +29,7 @@ function clearErrors() {
 export function openAccountPromptModal() {
   showCreateMode();
   clearErrors();
-  ['acctNameInput', 'acctAgeInput', 'acctEmailInput', 'acctPasswordInput',
+  ['acctUsernameInput', 'acctAgeInput', 'acctEmailInput', 'acctPasswordInput',
     'acctSigninEmailInput', 'acctSigninPasswordInput'].forEach(id => {
     document.getElementById(id).value = '';
   });
@@ -64,23 +64,30 @@ document.getElementById('acctSwitchToSignin').addEventListener('click', () => { 
 document.getElementById('acctSwitchToCreate').addEventListener('click', () => { clearErrors(); showCreateMode(); });
 
 document.getElementById('acctCreateBtn').addEventListener('click', async () => {
-  const name = document.getElementById('acctNameInput').value.trim();
+  const username = document.getElementById('acctUsernameInput').value.trim();
   const ageRaw = document.getElementById('acctAgeInput').value.trim();
   const email = document.getElementById('acctEmailInput').value.trim();
   const password = document.getElementById('acctPasswordInput').value;
   const errEl = document.getElementById('acctErrorCreate');
-  if (!name || !email || !password) {
-    errEl.textContent = 'Name, email, and password are required.';
+  if (!username || !email || !password) {
+    errEl.textContent = 'Username, email, and password are required.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!isValidUsername(username)) {
+    errEl.textContent = 'Username must be 3–20 characters: letters, numbers, and underscores only.';
     errEl.style.display = 'block';
     return;
   }
   const age = ageRaw ? parseInt(ageRaw, 10) : null;
   if (age != null && Number.isFinite(age)) state.pendingSignupAge = age;
+  state.pendingSignupUsername = username;
   try {
-    await createAccountWithEmail(email, password, name);
+    await createAccountWithEmail(email, password);
     document.getElementById('accountModal').classList.add('hidden');
   } catch (err) {
     state.pendingSignupAge = null;
+    state.pendingSignupUsername = null;
     errEl.textContent = friendlyAuthError(err);
     errEl.style.display = 'block';
   }

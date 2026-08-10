@@ -80,7 +80,7 @@ function acceptChallenge(c) {
 
 function declineChallenge(c) {
   setDoc(doc(db, 'users', c.fromUid, 'inbox', state.currentUser.uid), {
-    type: 'challenge_declined', byUid: state.currentUser.uid, byName: state.profile.displayName,
+    type: 'challenge_declined', byUid: state.currentUser.uid, byName: state.profile.username,
     code: c.code, createdAt: Date.now()
   }).catch(err => console.error('Failed to notify decline', err));
   deleteDoc(doc(db, 'users', state.currentUser.uid, 'inbox', c.id)).catch(() => {});
@@ -128,7 +128,7 @@ async function doFriendSearch() {
   if (!term) return;
   try {
     const q = query(collection(db, 'publicProfiles'),
-      orderBy('displayNameLower'), startAt(term), endAt(term + ''), limit(10));
+      orderBy('usernameLower'), startAt(term), endAt(term + ''), limit(10));
     const snap = await getDocs(q);
     if (snap.empty) {
       resultList.innerHTML = '<div class="empty-note">No players found.</div>';
@@ -152,7 +152,7 @@ function renderFriendResultRow(container, uid, data) {
   row.innerHTML = `
     <div class="favatar">${friendGlyph(data)}</div>
     <div class="finfo">
-      <div class="fname">${escapeHtml(data.displayName || 'Anonymous')}${data.isOwner ? ' <span class="owner-badge">🛡️ Owner</span>' : ''}</div>
+      <div class="fname">${escapeHtml(data.username || 'Anonymous')}${data.isOwner ? ' <span class="owner-badge">🛡️ Owner</span>' : ''}</div>
       <div class="fmeta">${league.icon} ${league.name} · ${data.trophies || 0} trophies</div>
     </div>
     ${isFriend ? '<span class="empty-note">Friends</span>' : '<button class="btn-small">Add</button>'}
@@ -171,7 +171,7 @@ export function sendFriendRequest(targetUid) {
   setDoc(doc(db, 'users', targetUid, 'inbox', state.currentUser.uid), {
     type: 'friend_request',
     fromUid: state.currentUser.uid,
-    fromName: state.profile.displayName,
+    fromName: state.profile.username,
     fromAvatarPreset: state.profile.avatarPreset || null,
     fromPhotoURL: state.profile.photoURL || '',
     fromTrophies: state.profile.trophies || 0,
@@ -255,7 +255,7 @@ export async function renderFriendList() {
     row.innerHTML = `
       <div class="favatar">${friendGlyph(data)}</div>
       <div class="finfo">
-        <div class="fname">${escapeHtml(data.displayName || 'Anonymous')}${data.isOwner ? ' <span class="owner-badge">🛡️ Owner</span>' : ''}</div>
+        <div class="fname">${escapeHtml(data.username || 'Anonymous')}${data.isOwner ? ' <span class="owner-badge">🛡️ Owner</span>' : ''}</div>
         <div class="fmeta">${league.icon} ${league.name} · ${data.trophies || 0} trophies${(data.peakTrophies || 0) >= 2500 ? ' · 👑' : ''}</div>
         <div class="fpresence"><span class="presence-dot ${online ? 'online' : ''}"></span>${online ? 'Online' : 'Offline'}</div>
       </div>
@@ -264,7 +264,7 @@ export async function renderFriendList() {
       </div>
     `;
     row.querySelector('[data-challenge-uid]').addEventListener('click', () =>
-      sendFriendChallenge(uid, data.displayName || 'Anonymous'));
+      sendFriendChallenge(uid, data.username || 'Anonymous'));
     list.appendChild(row);
   });
 }
