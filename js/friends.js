@@ -4,7 +4,8 @@ import { escapeHtml } from './utils.js';
 import { leagueForTrophies } from './leagues.js';
 import { isFriendOnline } from './presence.js';
 import { joinFriendLobby, createFriendLobby, cancelFriendLobby } from './matchmaking.js';
-import { doSignIn, isOwner, saveProfile } from './profile.js';
+import { isOwner, saveProfile } from './profile.js';
+import { openAccountPromptModal } from './account-prompt.js';
 
 /* ================= FRIENDS ================= */
 export function startInboxListener() {
@@ -282,4 +283,4 @@ function sendFriendChallenge(uid, name) {
   createFriendLobby(uid, name);
 }
 
-document.getElementById('friendsSigninBtn').addEventListener('click', doSignIn);
+document.getElementById('friendsSigninBtn').addEventListener('click', () => openAccountPromptModal('signin'));

@@ -4,7 +4,7 @@ import { randInt } from './utils.js';
 import { renderLeagueCard } from './leagues.js';
 import { renderBattleLog } from './battle-log.js';
 import { enterMatch, startBotMatch } from './match.js';
-import { doSignIn } from './profile.js';
+import { openAccountPromptModal } from './account-prompt.js';
 
 /* ================= ONLINE: GATE / PANELS ================= */
 export function renderOnlineGate() {
@@ -280,4 +280,4 @@ document.getElementById('copyLobbyLinkBtn').addEventListener('click', async () =
   setTimeout(() => { btn.textContent = original; }, 1500);
 });
 
-document.getElementById('onlineSigninBtn').addEventListener('click', doSignIn);
+document.getElementById('onlineSigninBtn').addEventListener('click', () => openAccountPromptModal('signin'));

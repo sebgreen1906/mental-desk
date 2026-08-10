@@ -26,8 +26,8 @@ function clearErrors() {
   document.getElementById('acctErrorSignin').style.display = 'none';
 }
 
-export function openAccountPromptModal() {
-  showCreateMode();
+export function openAccountPromptModal(mode = 'create') {
+  if (mode === 'signin') showSigninMode(); else showCreateMode();
   clearErrors();
   ['acctUsernameInput', 'acctAgeInput', 'acctEmailInput', 'acctPasswordInput',
     'acctSigninEmailInput', 'acctSigninPasswordInput'].forEach(id => {

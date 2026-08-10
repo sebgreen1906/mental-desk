@@ -9,6 +9,7 @@ import { startPresenceHeartbeat } from './presence.js';
 import { renderOnlineGate } from './matchmaking.js';
 import { renderFriendsGate } from './friends.js';
 import { runOnboardingFlow } from './privacy.js';
+import { openAccountPromptModal } from './account-prompt.js';
 
 export const AVATAR_PRESETS = ['🦉', '🐺', '🦊', '🐢', '🦅', '🐯', '🐬', '🦁'];
 
@@ -379,8 +380,8 @@ document.getElementById('userChip').addEventListener('click', () => {
   document.querySelector('nav.tabs button[data-view="profile"]').click();
 });
 
-document.getElementById('signinBtn').addEventListener('click', doSignIn);
-document.getElementById('profileSigninBtn').addEventListener('click', doSignIn);
+document.getElementById('signinBtn').addEventListener('click', () => openAccountPromptModal('signin'));
+document.getElementById('profileSigninBtn').addEventListener('click', () => openAccountPromptModal('signin'));
 document.getElementById('signoutBtn').addEventListener('click', () => signOut(auth));
 
 document.getElementById('ageInput').addEventListener('change', e => {
