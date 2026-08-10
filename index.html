@@ -499,6 +499,62 @@
   </div>
 </div>
 
+<div class="modal-overlay hidden" id="accountModal">
+  <div class="modal-box">
+    <button class="modal-close" id="accountModalClose" aria-label="Close">✕</button>
+    <div class="modal-title">Save your progress</div>
+    <div class="modal-sub">Create an account to track your IQ score, trophies, and banners across devices — or skip and play as a guest.</div>
+
+    <div id="accountFormCreate">
+      <div class="account-field">
+        <div class="field-label">Name</div>
+        <input type="text" id="acctNameInput" placeholder="Your name" />
+      </div>
+      <div class="account-field">
+        <div class="field-label">Age (optional)</div>
+        <input type="number" id="acctAgeInput" min="1" max="120" placeholder="e.g. 27" />
+      </div>
+      <div class="account-field">
+        <div class="field-label">Email</div>
+        <input type="email" id="acctEmailInput" placeholder="you@example.com" />
+      </div>
+      <div class="account-field">
+        <div class="field-label">Password</div>
+        <input type="password" id="acctPasswordInput" placeholder="At least 6 characters" />
+      </div>
+      <div class="save-hint" id="acctErrorCreate" style="display:none;color:var(--red);"></div>
+      <button class="start-btn" id="acctCreateBtn" style="margin-top:6px;">Create account</button>
+      <div class="save-hint" style="margin-top:10px;text-align:center;">
+        Already have an account? <span class="footer-link" id="acctSwitchToSignin">Sign in</span>
+      </div>
+    </div>
+
+    <div id="accountFormSignin" style="display:none;">
+      <div class="account-field">
+        <div class="field-label">Email</div>
+        <input type="email" id="acctSigninEmailInput" placeholder="you@example.com" />
+      </div>
+      <div class="account-field">
+        <div class="field-label">Password</div>
+        <input type="password" id="acctSigninPasswordInput" placeholder="Password" />
+      </div>
+      <div class="save-hint" id="acctErrorSignin" style="display:none;color:var(--red);"></div>
+      <button class="start-btn" id="acctSigninBtn" style="margin-top:6px;">Sign in</button>
+      <div class="save-hint" style="margin-top:10px;text-align:center;">
+        Need an account? <span class="footer-link" id="acctSwitchToCreate">Create one</span>
+      </div>
+    </div>
+
+    <div class="account-divider">or</div>
+    <button class="signin-btn" id="acctGoogleBtn" style="width:100%;justify-content:center;">
+      <span class="g-badge">G</span>Continue with Google
+    </button>
+    <div class="save-hint" style="margin-top:16px;text-align:center;">
+      <span class="footer-link" id="acctSkipBtn">Maybe later</span>
+    </div>
+  </div>
+</div>
+
 <script type="module" src="js/main.js"></script>
 </body>
 </html>

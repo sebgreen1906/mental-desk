@@ -17,6 +17,7 @@ import './battle-log.js';
 import './friends.js';
 import './tutorial.js';
 import './privacy.js';
+import './account-prompt.js';
 
 import { loadProfile, renderProfile } from './profile.js';
 import { stopInboxListener } from './friends.js';
@@ -27,6 +28,7 @@ import { runOnboardingFlow, closePrivacyModalIfAccepted } from './privacy.js';
 import { closeLeagueModal } from './leagues.js';
 import { closeMatchDetailsModal } from './battle-log.js';
 import { closeTutorialModal } from './tutorial.js';
+import { dismissAccountPrompt } from './account-prompt.js';
 
 /* ================= ONLINE: JOIN VIA SHARED LINK (?join=CODE) ================= */
 // Runs after every other module has registered its DOM listeners (main.js is the
@@ -43,7 +45,10 @@ import { closeTutorialModal } from './tutorial.js';
 })();
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeLeagueModal(); closeMatchDetailsModal(); closeTutorialModal(); closePrivacyModalIfAccepted(); }
+  if (e.key === 'Escape') {
+    closeLeagueModal(); closeMatchDetailsModal(); closeTutorialModal();
+    closePrivacyModalIfAccepted(); dismissAccountPrompt();
+  }
 });
 
 onAuthStateChanged(auth, async (user) => {

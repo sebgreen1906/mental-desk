@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import { saveProfile } from './profile.js';
 import { openTutorial } from './tutorial.js';
+import { hasSeenAccountPrompt, openAccountPromptModal } from './account-prompt.js';
 
 /* ================= PRIVACY POLICY ================= */
 // Gates first-time use: shown before the tutorial, and unlike the other modals it can't be
@@ -9,9 +10,15 @@ export function hasAcceptedPrivacy() {
   return state.profile ? !!state.profile.hasAcceptedPrivacyPolicy : !!localStorage.getItem('md_privacy_accepted');
 }
 
+// Onboarding order: privacy policy -> optional account creation (skipped entirely if
+// already signed in) -> tutorial. Each step only fires once its predecessor is resolved.
 export function runOnboardingFlow() {
   if (!hasAcceptedPrivacy()) {
     openPrivacyModal();
+    return;
+  }
+  if (!state.currentUser && !hasSeenAccountPrompt()) {
+    openAccountPromptModal();
     return;
   }
   const tutorialSeen = state.profile ? state.profile.hasSeenTutorial : localStorage.getItem('md_tutorial_seen');

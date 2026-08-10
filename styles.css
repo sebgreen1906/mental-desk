@@ -403,6 +403,18 @@ h2.section-title::after{content:'';flex:1;height:1px;background:var(--border);}
   vertical-align:middle;white-space:nowrap;
 }
 
+/* ---------- ACCOUNT PROMPT ---------- */
+.account-field{margin-bottom:14px;}
+.account-field input{
+  width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:var(--font-mono);font-size:13px;padding:10px 12px;
+}
+.account-divider{
+  display:flex;align-items:center;gap:10px;margin:18px 0;
+  font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;
+}
+.account-divider::before,.account-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
 /* ---------- FRIENDS ---------- */
 .friend-search-row{display:flex;gap:10px;}
 .friend-search-row input{

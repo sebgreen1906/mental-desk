@@ -1,4 +1,5 @@
-import { db, doc, getDoc, setDoc, getDocs, collection, auth, GoogleAuthProvider, signInWithPopup, signOut } from './firebase.js';
+import { db, doc, getDoc, setDoc, getDocs, collection, auth, GoogleAuthProvider, signInWithPopup, signOut,
+  createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile as updateAuthProfile } from './firebase.js';
 import { state } from './state.js';
 import { escapeHtml } from './utils.js';
 import { setTick } from './shell.js';
@@ -88,12 +89,30 @@ export async function loadProfile() {
     await setDoc(ref, state.profile);
   }
 
+  // Carries progress a guest made (privacy acceptance, tutorial completion, pending email
+  // opt-in) into their profile the moment they sign in — otherwise these all default back
+  // to false/unset on a brand-new profile and the whole onboarding sequence re-triggers.
+  let migrated = false;
   const pendingOptIn = localStorage.getItem('md_pending_email_optin');
   if (pendingOptIn !== null) {
     state.profile.emailOptIn = pendingOptIn === '1';
     localStorage.removeItem('md_pending_email_optin');
-    saveProfile();
+    migrated = true;
   }
+  if (!state.profile.hasAcceptedPrivacyPolicy && localStorage.getItem('md_privacy_accepted') === '1') {
+    state.profile.hasAcceptedPrivacyPolicy = true;
+    migrated = true;
+  }
+  if (!state.profile.hasSeenTutorial && localStorage.getItem('md_tutorial_seen') === '1') {
+    state.profile.hasSeenTutorial = true;
+    migrated = true;
+  }
+  if (state.pendingSignupAge != null) {
+    state.profile.age = state.pendingSignupAge;
+    state.pendingSignupAge = null;
+    migrated = true;
+  }
+  if (migrated) saveProfile();
 
   applyProfileToTicker();
   renderProfile();
@@ -289,6 +308,17 @@ export function doSignIn() {
     console.error('Sign-in failed', err);
     alert('Sign-in failed: ' + err.message);
   });
+}
+
+export async function createAccountWithEmail(email, password, displayName) {
+  const cred = await createUserWithEmailAndPassword(auth, email, password);
+  if (displayName) await updateAuthProfile(cred.user, { displayName });
+  return cred.user;
+}
+
+export async function signInWithEmail(email, password) {
+  const cred = await signInWithEmailAndPassword(auth, email, password);
+  return cred.user;
 }
 
 document.getElementById('avatarPickerToggle').addEventListener('click', () => {

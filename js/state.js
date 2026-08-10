@@ -24,5 +24,7 @@ export const state = {
   tutorialStepIndex: 0,
   tutorialDemoStreak: 0,
 
-  lastEmoteSentAt: 0
+  lastEmoteSentAt: 0,
+
+  pendingSignupAge: null
 };
