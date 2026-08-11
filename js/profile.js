@@ -1,4 +1,4 @@
-import { db, doc, getDoc, setDoc, getDocs, collection, auth, GoogleAuthProvider, signInWithPopup, signOut,
+import { db, doc, getDoc, setDoc, deleteDoc, getDocs, collection, auth, GoogleAuthProvider, signInWithPopup, signOut,
   createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile as updateAuthProfile,
   sendPasswordResetEmail } from './firebase.js';
 import { state } from './state.js';
@@ -105,6 +105,29 @@ async function resolveUsername(preferred, uid) {
   const fallback = `${base}${Date.now().toString().slice(-6)}`.slice(0, 20);
   await claimUsername(fallback, uid);
   return fallback;
+}
+
+// Changing username: claim the new one first (only if the lowercase key actually differs —
+// a pure casing change like "peter" -> "Peter" already owns that slot, no claim needed), and
+// only release the old claim once the new one is confirmed. That ordering means a failure
+// partway through never leaves the account without any valid, owned username.
+export async function changeUsername(newUsername) {
+  if (!isValidUsername(newUsername)) throw new Error('INVALID_FORMAT');
+  const oldUsername = state.profile.username || '';
+  if (newUsername === oldUsername) return oldUsername;
+  const uid = state.currentUser.uid;
+  if (newUsername.toLowerCase() !== oldUsername.toLowerCase()) {
+    const claimed = await claimUsername(newUsername, uid);
+    if (!claimed) throw new Error('TAKEN');
+    if (oldUsername) {
+      deleteDoc(doc(db, 'usernames', oldUsername.toLowerCase())).catch(() => {});
+    }
+  }
+  state.profile.username = newUsername;
+  updateAuthProfile(state.currentUser, { displayName: newUsername }).catch(() => {});
+  saveProfile();
+  renderProfile();
+  return newUsername;
 }
 
 export async function loadProfile() {
@@ -383,6 +406,48 @@ document.getElementById('avatarPickerToggle').addEventListener('click', () => {
 
 document.getElementById('userChip').addEventListener('click', () => {
   document.querySelector('nav.tabs button[data-view="profile"]').click();
+});
+
+function closeUsernameEditForm() {
+  document.getElementById('usernameEditForm').style.display = 'none';
+  document.getElementById('usernameEditError').style.display = 'none';
+}
+
+document.getElementById('usernameEditToggle').addEventListener('click', () => {
+  const form = document.getElementById('usernameEditForm');
+  const opening = form.style.display === 'none';
+  if (opening) {
+    document.getElementById('usernameEditInput').value = (state.profile && state.profile.username) || '';
+    document.getElementById('usernameEditError').style.display = 'none';
+    form.style.display = 'block';
+    document.getElementById('usernameEditInput').focus();
+  } else {
+    closeUsernameEditForm();
+  }
+});
+
+document.getElementById('usernameCancelBtn').addEventListener('click', closeUsernameEditForm);
+
+document.getElementById('usernameSaveBtn').addEventListener('click', async () => {
+  const input = document.getElementById('usernameEditInput');
+  const errEl = document.getElementById('usernameEditError');
+  const newUsername = input.value.trim();
+  errEl.style.display = 'none';
+  if (!newUsername) return;
+  try {
+    await changeUsername(newUsername);
+    closeUsernameEditForm();
+  } catch (err) {
+    errEl.textContent = err.message === 'TAKEN' ? 'That username is already taken.'
+      : err.message === 'INVALID_FORMAT' ? 'Username must be 3–20 characters: letters, numbers, and underscores only.'
+      : 'Something went wrong — try again.';
+    errEl.style.display = 'block';
+  }
+});
+
+document.getElementById('usernameEditInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('usernameSaveBtn').click();
+  if (e.key === 'Escape') closeUsernameEditForm();
 });
 
 document.getElementById('signinBtn').addEventListener('click', () => openAccountPromptModal('signin'));
