@@ -15,17 +15,30 @@ import { openAccountPromptModal } from './account-prompt.js';
 export const AVATAR_PRESETS = ['🦉', '🐺', '🦊', '🐢', '🦅', '🐯', '🐬', '🦁'];
 
 export const ACHIEVEMENTS = [
-  { id: 'first_session', icon: '🎯', label: 'First session', category: 'offline', check: p => p.totalSessions >= 1 },
-  { id: 'correct_100', icon: '🥉', label: '100 correct', category: 'offline', check: p => p.totalCorrect >= 100 },
-  { id: 'correct_1000', icon: '🥈', label: '1,000 correct', category: 'offline', check: p => p.totalCorrect >= 1000 },
-  { id: 'correct_5000', icon: '🥇', label: '5,000 correct', category: 'offline', check: p => p.totalCorrect >= 5000 },
-  { id: 'streak_20', icon: '🔥', label: '20-streak', category: 'offline', check: p => p.bestStreakEver >= 20 },
-  { id: 'streak_50', icon: '⚡', label: '50-streak', category: 'offline', check: p => p.bestStreakEver >= 50 },
-  { id: 'online_first_win', icon: '🏁', label: 'First win', category: 'online', check: p => (p.onlineWins || 0) >= 1 },
-  { id: 'online_wins_10', icon: '🗡️', label: '10 wins', category: 'online', check: p => (p.onlineWins || 0) >= 10 },
-  { id: 'online_wins_50', icon: '⚔️', label: '50 wins', category: 'online', check: p => (p.onlineWins || 0) >= 50 },
-  { id: 'comeback', icon: '🔁', label: 'Comeback', category: 'online', check: p => p._justComeback === true },
-  { id: 'hyper_elite', icon: '👑', label: 'Hyperleague Elite', category: 'online', check: p => (p.peakTrophies || 0) >= 2500 },
+  { id: 'first_session', icon: '🎯', label: 'First session', category: 'offline', check: p => p.totalSessions >= 1,
+    description: 'Complete your first Speed Drills session.' },
+  { id: 'correct_100', icon: '🥉', label: '100 correct', category: 'offline', check: p => p.totalCorrect >= 100,
+    description: 'Answer 100 questions correctly across all Speed Drills sessions.' },
+  { id: 'correct_1000', icon: '🥈', label: '1,000 correct', category: 'offline', check: p => p.totalCorrect >= 1000,
+    description: 'Answer 1,000 questions correctly across all Speed Drills sessions.' },
+  { id: 'correct_5000', icon: '🥇', label: '5,000 correct', category: 'offline', check: p => p.totalCorrect >= 5000,
+    description: 'Answer 5,000 questions correctly across all Speed Drills sessions.' },
+  { id: 'streak_20', icon: '🔥', label: '20-streak', category: 'offline', check: p => p.bestStreakEver >= 20,
+    description: 'Reach a 20-answer streak in a single Speed Drills session.' },
+  { id: 'streak_50', icon: '⚡', label: '50-streak', category: 'offline', check: p => p.bestStreakEver >= 50,
+    description: 'Reach a 50-answer streak in a single Speed Drills session.' },
+  { id: 'online_first_win', icon: '🏁', label: 'First win', category: 'online', check: p => (p.onlineWins || 0) >= 1,
+    description: 'Win your first ranked online match.' },
+  { id: 'online_wins_10', icon: '🗡️', label: '10 wins', category: 'online', check: p => (p.onlineWins || 0) >= 10,
+    description: 'Win 10 ranked online matches.' },
+  { id: 'online_wins_50', icon: '⚔️', label: '50 wins', category: 'online', check: p => (p.onlineWins || 0) >= 50,
+    description: 'Win 50 ranked online matches.' },
+  { id: 'comeback', icon: '🔁', label: 'Comeback', category: 'online', check: p => p._justComeback === true,
+    description: 'Win a ranked match right after being on a losing streak of 3 or more.' },
+  { id: 'sharpshooter', icon: '🧮', label: 'Sharpshooter', category: 'online', check: p => (p._matchCorrectCount || 0) >= 15,
+    description: 'Answer 15 or more questions correctly in a single ranked online match — win, lose, or draw.' },
+  { id: 'hyper_elite', icon: '👑', label: 'Hyperleague Elite', category: 'online', check: p => (p.peakTrophies || 0) >= 2500,
+    description: 'Reach 2,500 trophies at least once. Kept permanently, even if you’re later demoted.' },
 ];
 
 export function defaultProfile(user) {
@@ -324,10 +337,24 @@ export function renderBannerRow(elId, category) {
       const chip = document.createElement('div');
       chip.className = 'banner-chip';
       chip.innerHTML = `<span class="ic">${a.icon}</span>${a.label}`;
+      chip.addEventListener('click', () => openAchievementModal(a));
       row.appendChild(chip);
     });
   }
 }
+
+export function openAchievementModal(a) {
+  document.getElementById('achievementModalTitle').textContent = `${a.icon} ${a.label}`;
+  document.getElementById('achievementModalDesc').textContent = a.description;
+  document.getElementById('achievementModal').classList.remove('hidden');
+}
+export function closeAchievementModal() {
+  document.getElementById('achievementModal').classList.add('hidden');
+}
+document.getElementById('achievementModalClose').addEventListener('click', closeAchievementModal);
+document.getElementById('achievementModal').addEventListener('click', e => {
+  if (e.target.id === 'achievementModal') closeAchievementModal();
+});
 
 export function renderAvatarPicker() {
   const picker = document.getElementById('avatarPicker');

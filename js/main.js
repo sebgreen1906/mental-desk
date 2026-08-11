@@ -31,6 +31,7 @@ import { closeMatchDetailsModal } from './battle-log.js';
 import { closeTutorialModal } from './tutorial.js';
 import { dismissAccountPrompt } from './account-prompt.js';
 import { closeSettingsModal } from './settings.js';
+import { closeAchievementModal } from './profile.js';
 
 /* ================= ONLINE: JOIN VIA SHARED LINK (?join=CODE) ================= */
 // Runs after every other module has registered its DOM listeners (main.js is the
@@ -49,7 +50,7 @@ import { closeSettingsModal } from './settings.js';
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     closeLeagueModal(); closeMatchDetailsModal(); closeTutorialModal();
-    closePrivacyModalIfAccepted(); dismissAccountPrompt(); closeSettingsModal();
+    closePrivacyModalIfAccepted(); dismissAccountPrompt(); closeSettingsModal(); closeAchievementModal();
   }
 });
 

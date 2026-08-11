@@ -310,17 +310,20 @@ export function endMatch() {
     actualDelta = Math.abs(profile.trophies - trophiesBefore);
     profile.peakTrophies = Math.max(profile.peakTrophies || 0, profile.trophies);
     afterLeague = leagueForTrophies(profile.trophies);
-
     profile._justComeback = (iWon && wasOnLossStreak);
+  } else if (!isFriendly && isDraw) {
+    profile.onlineDraws = (profile.onlineDraws || 0) + 1;
+  }
+
+  // Per-match achievements (like a high correct-answer count) should fire regardless of
+  // win/loss/draw — only trophy/streak-tied ones above are naturally win/loss-only.
+  if (!isFriendly) {
+    profile._matchCorrectCount = myRaw;
     ACHIEVEMENTS.forEach(a => {
       if (a.check(profile) && !profile.banners.includes(a.id)) profile.banners.push(a.id);
     });
+    delete profile._matchCorrectCount;
     delete profile._justComeback;
-
-    applyProfileToTicker();
-    saveProfile();
-  } else if (!isFriendly && isDraw) {
-    profile.onlineDraws = (profile.onlineDraws || 0) + 1;
     applyProfileToTicker();
     saveProfile();
   }
