@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
-  createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile }
+  createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile,
+  sendPasswordResetEmail, fetchSignInMethodsForEmail }
   from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot,
   collection, query, where, orderBy, limit, startAt, endAt, getDocs, runTransaction }
@@ -21,6 +22,7 @@ export const db = getFirestore(firebaseApp);
 export {
   GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
   createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile,
+  sendPasswordResetEmail, fetchSignInMethodsForEmail,
   doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot,
   collection, query, where, orderBy, limit, startAt, endAt, getDocs, runTransaction
 };

@@ -1,5 +1,6 @@
 import { db, doc, getDoc, setDoc, getDocs, collection, auth, GoogleAuthProvider, signInWithPopup, signOut,
-  createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile as updateAuthProfile } from './firebase.js';
+  createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile as updateAuthProfile,
+  sendPasswordResetEmail } from './firebase.js';
 import { state } from './state.js';
 import { escapeHtml } from './utils.js';
 import { setTick } from './shell.js';
@@ -368,6 +369,10 @@ export async function createAccountWithEmail(email, password) {
 export async function signInWithEmail(email, password) {
   const cred = await signInWithEmailAndPassword(auth, email, password);
   return cred.user;
+}
+
+export function resetPassword(email) {
+  return sendPasswordResetEmail(auth, email);
 }
 
 document.getElementById('avatarPickerToggle').addEventListener('click', () => {

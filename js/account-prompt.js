@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { doSignIn, createAccountWithEmail, signInWithEmail, isValidUsername } from './profile.js';
+import { doSignIn, createAccountWithEmail, signInWithEmail, isValidUsername, resetPassword } from './profile.js';
 import { runOnboardingFlow } from './privacy.js';
 
 /* ================= ACCOUNT PROMPT (post-privacy, pre-tutorial) =================
@@ -24,6 +24,7 @@ function showSigninMode() {
 function clearErrors() {
   document.getElementById('acctErrorCreate').style.display = 'none';
   document.getElementById('acctErrorSignin').style.display = 'none';
+  document.getElementById('acctResetSentNote').style.display = 'none';
 }
 
 export function openAccountPromptModal(mode = 'create') {
@@ -108,6 +109,33 @@ document.getElementById('acctSigninBtn').addEventListener('click', async () => {
   } catch (err) {
     errEl.textContent = friendlyAuthError(err);
     errEl.style.display = 'block';
+  }
+});
+
+document.getElementById('acctForgotPasswordBtn').addEventListener('click', async () => {
+  const email = document.getElementById('acctSigninEmailInput').value.trim();
+  const errEl = document.getElementById('acctErrorSignin');
+  const noteEl = document.getElementById('acctResetSentNote');
+  errEl.style.display = 'none';
+  noteEl.style.display = 'none';
+  if (!email) {
+    errEl.textContent = 'Enter your email above first, then tap "Forgot password?".';
+    errEl.style.display = 'block';
+    return;
+  }
+  try {
+    await resetPassword(email);
+    noteEl.textContent = "If an account exists for that email, we've sent a password reset link.";
+    noteEl.style.display = 'block';
+  } catch (err) {
+    // Doesn't reveal whether the email is registered — same message either way.
+    if (err && err.code === 'auth/user-not-found') {
+      noteEl.textContent = "If an account exists for that email, we've sent a password reset link.";
+      noteEl.style.display = 'block';
+    } else {
+      errEl.textContent = friendlyAuthError(err);
+      errEl.style.display = 'block';
+    }
   }
 });
 
