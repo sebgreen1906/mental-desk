@@ -299,6 +299,18 @@
           </div>
           <div>
             <div class="profile-name" id="profileName"></div>
+            <div style="margin-top:2px;">
+              <span class="footer-link" id="usernameEditToggle" style="font-size:11px;">Change username</span>
+            </div>
+            <div id="usernameEditForm" style="display:none;margin-top:10px;max-width:260px;">
+              <input type="text" id="usernameEditInput" maxlength="20"
+                style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-mono);font-size:13px;padding:8px 10px;" />
+              <div class="save-hint" id="usernameEditError" style="display:none;color:var(--red);margin-top:6px;"></div>
+              <div class="btn-row" style="margin-top:8px;">
+                <button class="btn-secondary" id="usernameSaveBtn" style="padding:8px;">Save</button>
+                <button class="btn-secondary" id="usernameCancelBtn" style="padding:8px;">Cancel</button>
+              </div>
+            </div>
             <div class="profile-email" id="profileEmail"></div>
             <div class="iq-badge">IQ SCORE <b id="profileIq">100</b></div>
           </div>
