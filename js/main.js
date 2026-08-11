@@ -18,6 +18,7 @@ import './friends.js';
 import './tutorial.js';
 import './privacy.js';
 import './account-prompt.js';
+import './settings.js';
 
 import { loadProfile, renderProfile } from './profile.js';
 import { stopInboxListener } from './friends.js';
@@ -29,6 +30,7 @@ import { closeLeagueModal } from './leagues.js';
 import { closeMatchDetailsModal } from './battle-log.js';
 import { closeTutorialModal } from './tutorial.js';
 import { dismissAccountPrompt } from './account-prompt.js';
+import { closeSettingsModal } from './settings.js';
 
 /* ================= ONLINE: JOIN VIA SHARED LINK (?join=CODE) ================= */
 // Runs after every other module has registered its DOM listeners (main.js is the
@@ -47,7 +49,7 @@ import { dismissAccountPrompt } from './account-prompt.js';
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     closeLeagueModal(); closeMatchDetailsModal(); closeTutorialModal();
-    closePrivacyModalIfAccepted(); dismissAccountPrompt();
+    closePrivacyModalIfAccepted(); dismissAccountPrompt(); closeSettingsModal();
   }
 });
 
