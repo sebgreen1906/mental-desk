@@ -291,7 +291,8 @@
     </div>
 
     <div id="profileSignedIn" style="display:none;">
-      <div class="panel">
+      <div class="panel" style="position:relative;">
+        <button class="help-btn" id="settingsBtn" aria-label="Settings" title="Settings" style="position:absolute;top:22px;right:22px;">⚙</button>
         <div class="profile-hero">
           <div class="profile-avatar-wrap" id="avatarPickerToggle">
             <div class="profile-avatar" id="profileAvatar"></div>
@@ -299,18 +300,6 @@
           </div>
           <div>
             <div class="profile-name" id="profileName"></div>
-            <div style="margin-top:2px;">
-              <span class="footer-link" id="usernameEditToggle" style="font-size:11px;">Change username</span>
-            </div>
-            <div id="usernameEditForm" style="display:none;margin-top:10px;max-width:260px;">
-              <input type="text" id="usernameEditInput" maxlength="20"
-                style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-mono);font-size:13px;padding:8px 10px;" />
-              <div class="save-hint" id="usernameEditError" style="display:none;color:var(--red);margin-top:6px;"></div>
-              <div class="btn-row" style="margin-top:8px;">
-                <button class="btn-secondary" id="usernameSaveBtn" style="padding:8px;">Save</button>
-                <button class="btn-secondary" id="usernameCancelBtn" style="padding:8px;">Cancel</button>
-              </div>
-            </div>
             <div class="profile-email" id="profileEmail"></div>
             <div class="iq-badge">IQ SCORE <b id="profileIq">100</b></div>
           </div>
@@ -363,38 +352,6 @@
         <div class="banner-row" id="bannerRowOnline"></div>
       </div>
 
-      <div class="panel">
-        <details class="about-you">
-          <summary>About you (optional)</summary>
-          <div class="about-you-fields">
-            <div>
-              <div class="field-label">Age</div>
-              <input type="number" id="ageInput" min="1" max="120" placeholder="e.g. 27" />
-            </div>
-            <div>
-              <div class="field-label">Gender</div>
-              <select id="genderInput">
-                <option value="">Prefer not to say</option>
-                <option value="female">Female</option>
-                <option value="male">Male</option>
-                <option value="nonbinary">Non-binary</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-          </div>
-          <div class="save-hint">Optional — used only to personalize your experience. Saved automatically.</div>
-          <label style="display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13px;color:var(--text-dim);cursor:pointer;">
-            <input type="checkbox" id="emailOptInInput" />
-            Get occasional emails from Mental Desk
-          </label>
-        </details>
-      </div>
-
-      <div class="panel" id="adminPanel" style="display:none;">
-        <h2 class="section-title">Admin</h2>
-        <p style="font-size:13px;color:var(--text-dim);margin:0 0 14px;">Export the list of users who've opted in to receive emails.</p>
-        <button class="btn-secondary" id="exportMailingListBtn">Export mailing list (.csv)</button>
-      </div>
     </div>
   </section>
 
@@ -568,6 +525,82 @@
     </button>
     <div class="save-hint" style="margin-top:16px;text-align:center;">
       <span class="footer-link" id="acctSkipBtn">Maybe later</span>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="settingsModal">
+  <div class="modal-box">
+    <button class="modal-close" id="settingsModalClose" aria-label="Close">✕</button>
+    <div class="modal-title">Settings</div>
+    <div class="chip-row" id="settingsTabs" style="margin-bottom:20px;">
+      <div class="chip on" data-settings-tab="general">General</div>
+      <div class="chip" data-settings-tab="privacy">Privacy</div>
+      <div class="chip" data-settings-tab="data">Data controls</div>
+      <div class="chip" data-settings-tab="security">Security</div>
+    </div>
+
+    <div id="settingsTabGeneral">
+      <div class="field-label">Username</div>
+      <input type="text" id="settingsUsernameInput" maxlength="20"
+        style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-mono);font-size:13px;padding:10px 12px;" />
+      <div class="save-hint" id="settingsUsernameError" style="display:none;color:var(--red);margin-top:6px;"></div>
+      <div class="save-hint" id="settingsUsernameSuccess" style="display:none;color:var(--green);margin-top:6px;"></div>
+      <button class="btn-secondary" id="settingsUsernameSaveBtn" style="margin-top:10px;">Save username</button>
+    </div>
+
+    <div id="settingsTabPrivacy" style="display:none;">
+      <div class="about-you-fields">
+        <div>
+          <div class="field-label">Age</div>
+          <input type="number" id="ageInput" min="1" max="120" placeholder="e.g. 27" />
+        </div>
+        <div>
+          <div class="field-label">Gender</div>
+          <select id="genderInput">
+            <option value="">Prefer not to say</option>
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+            <option value="nonbinary">Non-binary</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="save-hint">Optional — used only to personalize your experience. Saved automatically.</div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13px;color:var(--text-dim);cursor:pointer;">
+        <input type="checkbox" id="emailOptInInput" />
+        Get occasional emails from Mental Desk
+      </label>
+      <div class="save-hint" style="margin-top:20px;">
+        <span class="footer-link" id="settingsPrivacyPolicyLink">Read our Privacy Policy</span>
+      </div>
+    </div>
+
+    <div id="settingsTabData" style="display:none;">
+      <p style="font-size:13px;color:var(--text-dim);margin:0 0 14px;">Download a copy of the data we have stored for your account.</p>
+      <button class="btn-secondary" id="downloadMyDataBtn">Download my data (.json)</button>
+      <p style="font-size:13px;color:var(--text-dim);margin:20px 0 0;">To request full account deletion, contact us at <b>support@mental-desk.com</b>.</p>
+      <div id="adminPanel" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+        <h2 class="section-title">Admin</h2>
+        <p style="font-size:13px;color:var(--text-dim);margin:0 0 14px;">Export the list of users who've opted in to receive emails.</p>
+        <button class="btn-secondary" id="exportMailingListBtn">Export mailing list (.csv)</button>
+      </div>
+    </div>
+
+    <div id="settingsTabSecurity" style="display:none;">
+      <div class="save-hint" id="settingsSignInMethod" style="margin-bottom:16px;"></div>
+      <div id="settingsChangePasswordSection">
+        <div class="field-label">Current password</div>
+        <input type="password" id="settingsCurrentPasswordInput"
+          style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-mono);font-size:13px;padding:10px 12px;margin-bottom:12px;" />
+        <div class="field-label">New password</div>
+        <input type="password" id="settingsNewPasswordInput" placeholder="At least 6 characters"
+          style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-mono);font-size:13px;padding:10px 12px;" />
+        <div class="save-hint" id="settingsPasswordError" style="display:none;color:var(--red);margin-top:6px;"></div>
+        <div class="save-hint" id="settingsPasswordSuccess" style="display:none;color:var(--green);margin-top:6px;"></div>
+        <button class="btn-secondary" id="settingsChangePasswordBtn" style="margin-top:10px;">Change password</button>
+      </div>
+      <button class="btn-secondary" id="settingsSignOutBtn" style="width:100%;margin-top:24px;">Sign out</button>
     </div>
   </div>
 </div>
